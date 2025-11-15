@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetTrack - Discovery Status</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .stat-card h3 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        .stat-card .number {
+            font-size: 3em;
+            font-weight: bold;
+        }
+        .log-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .log-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .log-content {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 NetTrack Discovery Status</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Totale Switch NeDi</h3>
+                <div class="number">1605</div>
+            </div>
+            <div class="stat-card">
+                <h3>Processo Attivo</h3>
+                <div class="number" style="font-size: 2em;">✓ Running</div>
+            </div>
+            <div class="stat-card">
+                <h3>Modalità</h3>
+                <div class="number" style="font-size: 1.8em;">Discovery</div>
+            </div>
+        </div>
+        
+        <div class="log-section">
+            <h2>📊 Ultimi 100 Discovery Logs</h2>
+            <div class="log-content"></div>
+        </div>
+        
+        <div class="timestamp">
+            Generato: 2025-11-09 11:39:10 | PID: 3532284 | Log: nettrack_discovery.log
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh ogni 30 secondi
+        setTimeout(() => location.reload(), 30000);
+    </script>
+</body>
+</html>
