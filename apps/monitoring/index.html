@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Management - Enterprise Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(30, 41, 59, 0.5);
+            --border-color: rgba(148, 163, 184, 0.1);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body.light {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(148, 163, 184, 0.2);
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bg-gradient::before,
+        .bg-gradient::after {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            animation: float 20s infinite;
+        }
+
+        .bg-gradient::before {
+            background: var(--accent-blue);
+            top: -200px;
+            right: -200px;
+        }
+
+        .bg-gradient::after {
+            background: var(--accent-purple);
+            bottom: -200px;
+            left: -200px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(100px, -50px) scale(1.1); }
+            66% { transform: translate(-50px, 100px) scale(0.9); }
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            background: var(--bg-card);
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .server-status span {
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-secondary);
+            transform: scale(1.05);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            animation: slideUp 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-info h3 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-info p {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+        .stat-icon.purple { background: rgba(168, 85, 247, 0.1); color: var(--accent-purple); }
+
+        /* Apps Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            animation: slideUp 0.5s ease forwards;
+            opacity: 0;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .app-card:nth-child(1) { animation-delay: 0.1s; }
+        .app-card:nth-child(2) { animation-delay: 0.15s; }
+        .app-card:nth-child(3) { animation-delay: 0.2s; }
+        .app-card:nth-child(4) { animation-delay: 0.25s; }
+        .app-card:nth-child(5) { animation-delay: 0.3s; }
+        .app-card:nth-child(6) { animation-delay: 0.35s; }
+        .app-card:nth-child(7) { animation-delay: 0.4s; }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow);
+        }
+
+        .app-card:hover::before {
+            opacity: 0.05;
+        }
+
+        .app-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .app-card:hover .app-icon {
+            transform: scale(1.1);
+        }
+
+        .app-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .app-card-content h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .app-card:hover h3 {
+            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .app-card-content p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .app-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .app-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .app-detail span {
+            color: var(--text-secondary);
+        }
+
+        .app-detail code {
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+        }
+
+        .app-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .app-card:hover .app-button {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .app-button:hover {
+            box-shadow: var(--shadow);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .server-status {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Network Management</h1>
+                    <p>Enterprise Dashboard</p>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="server-status">
+                    <div class="status-dot"></div>
+                    <span>Server</span>
+                    <div style="width: 1px; height: 16px; background: var(--border-color);"></div>
+                    <span>Server IP</span>
+                    <div style="width: 1px; height: 16px; background: var(--border-color);"></div>
+                    <span>API: 5001</span>
+                </div>
+
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <svg id="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg id="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Total Applications</h3>
+                    <p>7</p>
+                </div>
+                <div class="stat-icon blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="8" rx="2"/>
+                        <rect x="2" y="14" width="20" height="8" rx="2"/>
+                        <line x1="6" y1="6" x2="6.01" y2="6"/>
+                        <line x1="6" y1="18" x2="6.01" y2="18"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Active Services</h3>
+                    <p style="color: var(--accent-green);">7</p>
+                </div>
+                <div class="stat-icon green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Network Status</h3>
+                    <p style="color: var(--accent-green);">Healthy</p>
+                </div>
+                <div class="stat-icon purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications Grid -->
+        <div class="apps-grid">
+            <!-- Migration Tool -->
+            <a href="/migration-tool/" class="app-card" style="--gradient-from: #3b82f6; --gradient-to: #06b6d4;">
+                <div class="app-card-header">
+                    <div class="app-icon">🔄</div>
+                    <div class="app-status">
+                        <div class="status-indicator"></div>
+                        <span class="status-badge">active</span>
+                    </div>
+                </div>
+                <div class="app-card-content">
+                    <h3>Migration Tool</h3>
+                    <p>HP/Huawei to Huawei switch migration utility</p>
+                    <div class="app-details">
+                        <div class="app-detail">
+                            <span>Port:</span>
+                            <code>9999</code>
+                        </div>
+                    </div>
+                    <button class="app-button">Open Application</button>
+                </div>
+            </a>
+
+            <!-- Config Switch React -->
+            <a href="/config-switch/" class="app-card" style="--gradient-from: #a855f7; --gradient-to: #ec4899;">
+                <div class="app-card-header">
+                    <div class="app-icon">🔧</div>
+                    <div class="app-status">
+                        <div class="status-indicator"></div>
+                        <span class="status-badge">active</span>
+                    </div>
+                </div>
+                <div class="app-card-content">
+                    <h3>Config Switch React</h3>
+                    <p>Modern configuration management interface</p>
+                    <div class="app-details">
+                        <div class="app-detail">
+                            <span>Port:</span>
+                            <code>8443</code>
+                        </div>
+                        <div class="app-detail">
+                            <span>Path:</span>
+                            <code>/config-switch</code>
+                        </div>
+                    </div>
+                    <button class="app-button">Open Application</button>
+                </div>
+            </a>
+
+            <!-- Port Mapper -->
+            <a href="/port-mapper/" class="app-card" style="--gradient-from: #10b981; --gradient-to: #34d399;">
+                <div class="app-card-header">
+                    <div class="app-icon">🗺️</div>
+                    <div class="app-status">
+                        <div class="status-indicator"></div>
+                        <span class="status-badge">active</span>
+                    </div>
+                </div>
+                <div class="app-card-content">
+                    <h3>Port Mapper</h3>
+                    <p>Network port mapping and VLAN management</p>
+                    <div class="app-details">
+                        <div class="app-detail">
+                            <span>Port:</span>
+                            <code>5002</code>
+                        </div>
+                    </div>
+                    <button class="app-button">Open Application</button>
+                </div>
+            </a>
+
+            <!-- Network Discovery -->
+            <a href="/discovery.html" class="app-card" style="--gradient-from: #6366f1; --gradient-to: #3b82f6;">
+                <div class="app-card-header">
+                    <div class="app-icon">🔍</div>
+                    <div class="app-status">
+                        <div class="status-indicator"></div>
+                        <span class="status-badge">active</span>
+                    </div>
+                </div>
+                <div class="app-card-content">
+                    <h3>Network Discovery</h3>
+                    <p>Automated SNMP device discovery and scanning</p>
+                    <div class="app-details">
+                        <div class="app-detail">
+                            <span>Protocol:</span>
+                            <code>SNMP</code>
+                        </div>
+                    </div>
+                    <button class="app-button">Open Application</button>
+                </div>
+            </a>
+
+            <!-- SSH Terminal -->
+            <a href="/ssh-terminal/" class="app-card" style="--gradient-from: #8b5cf6; --gradient-to: #a855f7;">
+                <div class="app-card-header">
+                    <div class="app-icon">💻</div>
+                    <div class="app-status">
+                        <div class="status-indicator"></div>
+                        <span class="status-badge">active</span>
+                    </div>
+                </div>
+                <div class="app-card-content">
+                    <h3>SSH Terminal</h3>
+                    <p>Web-based secure shell terminal access</p>
+                    <div class="app-details">
+                        <div class="app-detail">
+                            <span>Port:</span>
+                            <code>8443</code>
+                        </div>
+                    </div>
+                    <button class="app-button">Open Application</button>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+
+            body.classList.toggle('light');
+
+            if (body.classList.contains('light')) {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+                localStorage.setItem('theme', 'light');
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+
+            if (savedTheme === 'light') {
+                document.body.classList.add('light');
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
