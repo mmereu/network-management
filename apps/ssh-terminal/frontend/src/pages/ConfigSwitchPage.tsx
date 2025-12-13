@@ -30,7 +30,8 @@ interface ApiSwitchResult {
   error_message?: string | null;
 }
 
-const API_BASE_URL = 'http://172.24.1.33/api';
+// API base URL - uses relative path for production
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export function ConfigSwitchPage() {
   const [ipList, setIpList] = useState('');

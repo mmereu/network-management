@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Huawei Switch Migration Tool - Main Entry Point
-Run on: http://172.24.1.33:9999
+Run on: http://YOUR_SERVER:9999
 """
 from app import create_app
 

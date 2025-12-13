@@ -45,7 +45,7 @@ class TemplateGenerator:
             logger.error(f"Complete template generation failed: {str(e)}")
             raise
 
-    def generate_config(self, interfaces, admin_password='Admin@123', hostname='NewSwitch'):
+    def generate_config(self, interfaces, admin_password='ChangeMe123', hostname='NewSwitch'):
         """
         Generate complete switch configuration
 

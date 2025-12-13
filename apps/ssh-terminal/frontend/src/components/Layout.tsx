@@ -41,7 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Home Button */}
             <a
-              href="http://172.24.1.33/"
+              href="/"
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 shadow-lg hover:shadow-purple-500/50"
             >
               <Home className="w-5 h-5" />

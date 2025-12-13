@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+env/
+venv/
+.venv/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+**/frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backups (may contain sensitive data)
+backups/
+
+# Claude traces (conversation logs)
+.claude-trace/
+
+# Serena memories (may contain sensitive data)
+.serena/memories/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
