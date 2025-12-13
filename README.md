@@ -18,23 +18,48 @@ Consolidamento di tutte le applicazioni, backend e frontend in un'unica struttur
 
 ```
 Network Management/
-├── apps/                    # Applicazioni Frontend
-│   ├── ssh-terminal/       # SSH Web Terminal (React + xterm.js) - Port 8443
-│   ├── config-switch/      # Config Switch React UI - Port 8443/config-switch
-│   ├── port-mapper/        # Huawei Port Mapper - Port 5002
-│   ├── migration-tool/     # Migration Tool - Port 9999
-│   ├── monitoring/         # Monitoring Dashboard HTML
-│   ├── discovery/          # Network Discovery HTML
-│   └── config-classic/     # Config Switch Classic HTML
-├── backend/                # Backend APIs
-│   ├── api/                # Flask APIs (app_huawei_final.py - Port 5001)
-│   └── shared/             # Shared utilities
+├── apps/                    # Applicazioni Frontend (~205MB)
+│   ├── ssh-terminal/       # SSH Web Terminal (React + xterm.js) - Port 8443 [204MB]
+│   │   ├── frontend/       # React app con Vite
+│   │   ├── backend/        # Node.js + Express + SSH2
+│   │   └── node_modules/   # Dependencies (majority of size)
+│   ├── config-switch/      # Config Switch React UI - Port 8443/config-switch [61KB]
+│   │   └── app_huawei_final.py  # Flask backend per configurazione switch
+│   ├── port-mapper/        # Huawei Port Mapper - Port 5002 [574KB]
+│   │   ├── app_switch_mapper.py  # Main Flask app (11KB)
+│   │   ├── data_processor.py     # Data processing (18KB)
+│   │   ├── requirements.txt      # Python dependencies
+│   │   └── frontend/             # Frontend assets
+│   ├── migration-tool/     # Migration Tool HP/Huawei → Huawei - Port 9999 [181KB]
+│   │   ├── run_PROTECTED.py      # Entry point
+│   │   ├── app_PROTECTED/        # Application code
+│   │   └── templates_PROTECTED/  # HTML templates
+│   ├── monitoring/         # Monitoring Dashboard HTML [48KB]
+│   │   ├── monitor_process.html  # Main dashboard (24KB)
+│   │   ├── js/monitoring_dashboard.js  # WebSocket client (11KB)
+│   │   └── css/style.css         # Styles (11KB)
+│   ├── discovery/          # Network Discovery HTML [76KB]
+│   │   ├── discovery.html        # SNMP discovery interface (64KB)
+│   │   └── css/style.css         # Shared styles
+│   └── config-classic/     # Config Switch Classic HTML [64KB]
+│       ├── huawei-test.html      # Legacy interface (10KB)
+│       ├── configswitch.html     # Alternative interface (10KB)
+│       ├── js/configswitch_v6.js # Configuration logic (23KB)
+│       └── css/style.css         # Styles
+├── backend/                # Backend APIs [96KB]
+│   └── api/                # Centralized Flask APIs
+│       ├── app_huawei_final.py   # Main API server - Port 5001 (61KB)
+│       ├── app_switch_mapper.py  # Port mapper API - Port 5002 (11KB)
+│       └── data_processor.py     # Data utilities (18KB)
 ├── scripts/                # Automation Scripts
 │   ├── backup-from-server.sh    # Server → Local backup
 │   ├── deploy-to-server.sh      # Local → Server deploy
 │   └── sync-bidirectional.sh    # Bidirectional sync
 ├── docs/                   # Documentazione
 ├── backups/                # Local backups timestampati
+│   └── server-backup-20251115/  # Initial backup [144KB]
+│       ├── html/                # All HTML files from /var/www/html/
+│       └── backend-api/         # Python backend files
 └── README.md               # This file
 ```
 
@@ -84,9 +109,24 @@ Network Management/
 
 ## 🔧 Backend API
 
-**Main API**: `backend/api/app_huawei_final.py`
-**Port**: 5001
-**Endpoints**: http://172.24.1.33:5001/api/
+**Centralized APIs**: `backend/api/`
+
+### Main API (Port 5001)
+- **File**: `app_huawei_final.py` (61KB)
+- **Function**: Switch configuration via SSH
+- **Endpoints**: http://172.24.1.33:5001/api/
+- **Used by**: Config Switch React, Config Classic
+
+### Port Mapper API (Port 5002)
+- **File**: `app_switch_mapper.py` (11KB)
+- **Function**: SNMP port and VLAN mapping
+- **Endpoints**: http://172.24.1.33:5002/api/
+- **Support**: `data_processor.py` - Data processing utilities
+
+### Migration Tool (Port 9999)
+- **File**: `apps/migration-tool/run_PROTECTED.py`
+- **Function**: HP/Huawei to Huawei migration
+- **URL**: http://172.24.1.33:9999
 
 ---
 
@@ -94,10 +134,47 @@ Network Management/
 
 ### Development
 
+**React Apps** (SSH Terminal):
 ```bash
-# SSH Terminal (esempio)
-cd apps/ssh-terminal
-npm run dev
+cd apps/ssh-terminal/frontend
+npm install
+npm run dev  # Frontend on port 5173
+```
+
+```bash
+cd apps/ssh-terminal/backend
+npm install
+node server.js  # Backend WebSocket server
+```
+
+**Flask Apps** (Config Switch, Port Mapper):
+```bash
+# Config Switch
+cd apps/config-switch
+pip install -r requirements.txt  # If requirements exist
+python3 app_huawei_final.py --host 0.0.0.0 --port 5001
+
+# Port Mapper
+cd apps/port-mapper
+pip install -r requirements.txt
+python3 app_switch_mapper.py --host 0.0.0.0 --port 5002
+```
+
+**Migration Tool**:
+```bash
+cd apps/migration-tool
+pip install -r requirements.txt  # If exists
+python3 run_PROTECTED.py
+```
+
+**HTML Apps** (Monitoring, Discovery, Config Classic):
+- Serve via HTTP server (Apache/Nginx) or Python SimpleHTTPServer
+- Already deployed on server at http://172.24.1.33/
+- For local testing:
+```bash
+cd apps/monitoring
+python3 -m http.server 8000
+# Access at http://localhost:8000/monitor_process.html
 ```
 
 ### Backup from Server
@@ -144,10 +221,18 @@ npm run dev
 
 **Path**: `backups/server-backup-YYYYMMDD-HHMMSS/`
 
+**Example**: `backups/server-backup-20251115/` (144KB - initial backup)
+
 **Contents**:
-- HTML files from `/var/www/html/`
-- Backend APIs from `/home/mmereu/`
-- Configs and assets
+- **html/**: All HTML files from `/var/www/html/`
+  - monitor_process.html, discovery.html
+  - huawei-test.html, configswitch.html
+  - js/ and css/ subdirectories
+- **backend-api/**: Python backend files from `/home/mmereu/`
+  - app_huawei_final.py (Config Switch API)
+  - app_switch_mapper.py (Port Mapper API)
+- **ssh-terminal/** (only in full mode): Complete SSH Terminal app
+- **configs/**: Configuration files and assets
 
 **Frequency**:
 - Manual: before major changes
@@ -194,6 +279,25 @@ Full documentation available in `docs/` directory:
 - **scp**: Secure file copy
 - **Git**: Version control (local)
 - **SSH**: Server access
+
+---
+
+## 🎨 Homepage Professional
+
+**Main Homepage**: `apps/monitoring/index.html` (26KB) - **Professional Enterprise Dashboard**
+
+### Features
+- ✨ **Dark/Light Mode Toggle** - Persistent theme switching
+- 🎨 **Modern Glassmorphism Design** - Professional card-based UI
+- 📊 **Stats Dashboard** - Real-time metrics overview
+- 🚀 **Smooth Animations** - Fade-in effects and hover interactions
+- 📱 **Fully Responsive** - Mobile, tablet, desktop optimized
+- 💚 **Status Indicators** - Animated pulse indicators
+- 🎯 **Interactive Cards** - Hover effects with gradient accents
+
+**Server URL**: http://172.24.1.33/
+
+**Backup Original**: `apps/monitoring/index-original.html` (8.6KB)
 
 ---
 
