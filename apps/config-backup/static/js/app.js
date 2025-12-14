@@ -393,6 +393,11 @@ function escapeHtml(text) {
 // SUBNET BACKUP SECTION
 // ============================================
 
+// Subnet state for sorting
+let subnetDevices = [];
+let subnetSortColumn = 'ip';
+let subnetSortOrder = 'asc';
+
 // Subnet DOM Elements
 const subnetForm = document.getElementById('subnet-form');
 const subnetInput = document.getElementById('subnet-input');
@@ -620,19 +625,49 @@ function displaySubnetResults(data) {
         </div>
     `;
 
-    // Combine results and failed
-    const allDevices = [
+    // Store devices for sorting
+    subnetDevices = [
         ...(backup.results || []),
         ...(backup.failed || [])
-    ].sort((a, b) => a.ip.localeCompare(b.ip));
+    ];
 
-    // Devices table
-    if (allDevices.length === 0) {
+    // Reset sort state and render
+    subnetSortColumn = 'ip';
+    subnetSortOrder = 'asc';
+    sortAndRenderDevices();
+    setupSortableHeaders();
+}
+
+// Sort and render devices table
+function sortAndRenderDevices() {
+    if (subnetDevices.length === 0) {
         devicesTbody.innerHTML = '<tr><td colspan="6" class="loading">Nessun dispositivo</td></tr>';
         return;
     }
 
-    devicesTbody.innerHTML = allDevices.map(device => {
+    // Sort devices
+    const sorted = [...subnetDevices].sort((a, b) => {
+        let comparison = 0;
+
+        switch (subnetSortColumn) {
+            case 'ip':
+                comparison = compareIPs(a.ip, b.ip);
+                break;
+            case 'hostname':
+                comparison = (a.hostname || '').localeCompare(b.hostname || '');
+                break;
+            case 'status':
+                comparison = (a.success === b.success) ? 0 : (a.success ? -1 : 1);
+                break;
+            default:
+                comparison = 0;
+        }
+
+        return subnetSortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    // Render table
+    devicesTbody.innerHTML = sorted.map(device => {
         const typeBadge = device.type === 'core'
             ? '<span class="badge badge-core">Core</span>'
             : '<span class="badge badge-l2">L2</span>';
@@ -658,6 +693,62 @@ function displaySubnetResults(data) {
             </tr>
         `;
     }).join('');
+
+    // Update sort icons
+    updateSortIcons();
+}
+
+// Compare IP addresses numerically
+function compareIPs(ip1, ip2) {
+    const parts1 = ip1.split('.').map(Number);
+    const parts2 = ip2.split('.').map(Number);
+
+    for (let i = 0; i < 4; i++) {
+        if (parts1[i] !== parts2[i]) {
+            return parts1[i] - parts2[i];
+        }
+    }
+    return 0;
+}
+
+// Setup sortable headers click handlers
+function setupSortableHeaders() {
+    document.querySelectorAll('.devices-table th.sortable').forEach(th => {
+        // Remove old listeners by cloning
+        const newTh = th.cloneNode(true);
+        th.parentNode.replaceChild(newTh, th);
+
+        newTh.addEventListener('click', () => {
+            const column = newTh.dataset.sort;
+
+            if (subnetSortColumn === column) {
+                // Toggle order
+                subnetSortOrder = subnetSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, default to asc
+                subnetSortColumn = column;
+                subnetSortOrder = 'asc';
+            }
+
+            sortAndRenderDevices();
+        });
+    });
+}
+
+// Update sort icons in headers
+function updateSortIcons() {
+    document.querySelectorAll('.devices-table th.sortable').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        const column = th.dataset.sort;
+
+        if (column === subnetSortColumn) {
+            icon.textContent = subnetSortOrder === 'asc' ? '↑' : '↓';
+            th.classList.add('sorted');
+        } else {
+            icon.textContent = '⇅';
+            th.classList.remove('sorted');
+        }
+    });
 }
 
 function hideSubnetResults() {
