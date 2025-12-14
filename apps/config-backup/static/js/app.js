@@ -57,6 +57,15 @@ function setupEventListeners() {
     // Theme toggle
     themeToggle.addEventListener('click', toggleTheme);
 
+    // Home button - navigate to main dashboard (port 80)
+    const homeBtn = document.getElementById('home-btn');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = `${window.location.protocol}//${window.location.hostname}/`;
+        });
+    }
+
     // Site selection
     siteSelect.addEventListener('change', onSiteSelect);
 
