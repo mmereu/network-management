@@ -4,16 +4,29 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ipaddress
 
-from .ssh_manager import SSHManager
-from .backup_manager import (
-    save_backup,
-    read_backup_file,
-    get_diff_between_backups,
-    get_latest_diff,
-    BACKUPS_DIR,
-)
-from .csv_parser import parse_pdv_csv, get_site_by_id, get_sites_dropdown
-from . import database
+# Support both module and standalone execution
+try:
+    from .ssh_manager import SSHManager
+    from .backup_manager import (
+        save_backup,
+        read_backup_file,
+        get_diff_between_backups,
+        get_latest_diff,
+        BACKUPS_DIR,
+    )
+    from .csv_parser import parse_pdv_csv, get_site_by_id, get_sites_dropdown
+    from . import database
+except ImportError:
+    from ssh_manager import SSHManager
+    from backup_manager import (
+        save_backup,
+        read_backup_file,
+        get_diff_between_backups,
+        get_latest_diff,
+        BACKUPS_DIR,
+    )
+    from csv_parser import parse_pdv_csv, get_site_by_id, get_sites_dropdown
+    import database
 
 logger = logging.getLogger(__name__)
 

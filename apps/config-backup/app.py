@@ -10,8 +10,13 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_cors import CORS
 
-from .routes import bp as routes_bp
-from . import database
+# Support both module and standalone execution
+try:
+    from .routes import bp as routes_bp
+    from . import database
+except ImportError:
+    from routes import bp as routes_bp
+    import database
 
 
 def create_app():

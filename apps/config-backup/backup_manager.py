@@ -5,7 +5,11 @@ import difflib
 from datetime import datetime
 import logging
 
-from . import database
+# Support both module and standalone execution
+try:
+    from . import database
+except ImportError:
+    import database
 
 logger = logging.getLogger(__name__)
 
