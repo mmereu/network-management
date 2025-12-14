@@ -531,6 +531,35 @@ body.light .icon-moon { display: block; }
     color: var(--text-secondary);
 }
 
+/* Sortable headers for history table */
+.history-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.history-table th.sortable:hover {
+    background: var(--bg-card-hover);
+    color: var(--accent-blue);
+}
+
+.history-table th.sortable.sorted {
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.history-table th .sort-icon {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.history-table th.sortable:hover .sort-icon,
+.history-table th.sortable.sorted .sort-icon {
+    opacity: 1;
+}
+
 .history-table td {
     font-size: 0.875rem;
 }

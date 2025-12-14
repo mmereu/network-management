@@ -6,6 +6,11 @@
 let sites = [];
 let currentSite = null;
 
+// History sorting state
+let historyBackups = [];
+let historySortColumn = 'timestamp';
+let historySortOrder = 'desc';
+
 // DOM Elements
 const siteSelect = document.getElementById('site-select');
 const ipInput = document.getElementById('ip-input');
@@ -320,7 +325,13 @@ async function loadHistory() {
         const data = await response.json();
 
         if (data.success) {
-            displayHistory(data.backups);
+            // Store backups for sorting
+            historyBackups = data.backups;
+            // Reset to default sort (newest first)
+            historySortColumn = 'timestamp';
+            historySortOrder = 'desc';
+            sortAndRenderHistory();
+            setupHistorySortableHeaders();
         }
     } catch (error) {
         console.error('Error loading history:', error);
@@ -328,13 +339,41 @@ async function loadHistory() {
     }
 }
 
-function displayHistory(backups) {
-    if (!backups.length) {
+// Sort and render history table
+function sortAndRenderHistory() {
+    if (!historyBackups.length) {
         historyTbody.innerHTML = '<tr><td colspan="6" class="loading">Nessun backup trovato</td></tr>';
         return;
     }
 
-    historyTbody.innerHTML = backups.map(backup => {
+    // Sort backups
+    const sorted = [...historyBackups].sort((a, b) => {
+        let comparison = 0;
+
+        switch (historySortColumn) {
+            case 'sito':
+                const sitoA = a.nome_sito || a.sito || '';
+                const sitoB = b.nome_sito || b.sito || '';
+                comparison = sitoA.localeCompare(sitoB);
+                break;
+            case 'ip':
+                comparison = compareIPs(a.ip || '', b.ip || '');
+                break;
+            case 'timestamp':
+                comparison = new Date(a.timestamp) - new Date(b.timestamp);
+                break;
+            case 'size':
+                comparison = (a.config_size || 0) - (b.config_size || 0);
+                break;
+            default:
+                comparison = 0;
+        }
+
+        return historySortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    // Render table
+    historyTbody.innerHTML = sorted.map(backup => {
         const methodBadge = backup.connection_method === 'SSH'
             ? '<span class="badge badge-ssh">SSH</span>'
             : '<span class="badge badge-telnet">Telnet</span>';
@@ -354,6 +393,49 @@ function displayHistory(backups) {
             </tr>
         `;
     }).join('');
+
+    // Update sort icons
+    updateHistorySortIcons();
+}
+
+// Setup history sortable headers click handlers
+function setupHistorySortableHeaders() {
+    document.querySelectorAll('.history-table th.sortable').forEach(th => {
+        // Remove old listeners by cloning
+        const newTh = th.cloneNode(true);
+        th.parentNode.replaceChild(newTh, th);
+
+        newTh.addEventListener('click', () => {
+            const column = newTh.dataset.sort;
+
+            if (historySortColumn === column) {
+                // Toggle order
+                historySortOrder = historySortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, default to asc (except timestamp defaults to desc)
+                historySortColumn = column;
+                historySortOrder = column === 'timestamp' ? 'desc' : 'asc';
+            }
+
+            sortAndRenderHistory();
+        });
+    });
+}
+
+// Update history sort icons in headers
+function updateHistorySortIcons() {
+    document.querySelectorAll('.history-table th.sortable').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        const column = th.dataset.sort;
+
+        if (column === historySortColumn) {
+            icon.textContent = historySortOrder === 'asc' ? '↑' : '↓';
+            th.classList.add('sorted');
+        } else {
+            icon.textContent = '⇅';
+            th.classList.remove('sorted');
+        }
+    });
 }
 
 // Actions
