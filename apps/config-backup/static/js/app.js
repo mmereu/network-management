@@ -388,3 +388,278 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============================================
+// SUBNET BACKUP SECTION
+// ============================================
+
+// Subnet DOM Elements
+const subnetForm = document.getElementById('subnet-form');
+const subnetInput = document.getElementById('subnet-input');
+const subnetSiteSelect = document.getElementById('subnet-site-select');
+const subnetManualCreds = document.getElementById('subnet-manual-credentials');
+const subnetUsername = document.getElementById('subnet-username');
+const subnetPassword = document.getElementById('subnet-password');
+const subnetUsernameCore = document.getElementById('subnet-username-core');
+const subnetPasswordCore = document.getElementById('subnet-password-core');
+const backupCoreOnly = document.getElementById('backup-core-only');
+const backupL2Only = document.getElementById('backup-l2-only');
+const subnetStatusMessage = document.getElementById('subnet-status-message');
+const subnetProgress = document.getElementById('subnet-progress');
+const stepDiscovery = document.getElementById('step-discovery');
+const stepBackup = document.getElementById('step-backup');
+const subnetProgressFill = document.getElementById('subnet-progress-fill');
+const subnetProgressText = document.getElementById('subnet-progress-text');
+const subnetResultsSection = document.getElementById('subnet-results-section');
+const discoveryStats = document.getElementById('discovery-stats');
+const devicesTbody = document.getElementById('devices-tbody');
+
+// Initialize subnet dropdown
+function populateSubnetSiteDropdown(dropdown) {
+    subnetSiteSelect.innerHTML = '<option value="">-- Credenziali manuali --</option>';
+
+    dropdown.forEach(site => {
+        const option = document.createElement('option');
+        option.value = site.value;
+        option.textContent = site.label;
+        subnetSiteSelect.appendChild(option);
+    });
+}
+
+// Update loadSites to also populate subnet dropdown
+const originalLoadSites = loadSites;
+loadSites = async function() {
+    try {
+        const response = await fetch('/api/sites');
+        const data = await response.json();
+
+        if (data.success) {
+            sites = data.sites;
+            populateSiteDropdown(data.dropdown);
+            populateSubnetSiteDropdown(data.dropdown);
+            populateHistoryFilter(data.sites);
+        }
+    } catch (error) {
+        console.error('Error loading sites:', error);
+        siteSelect.innerHTML = '<option value="">Errore caricamento siti</option>';
+    }
+};
+
+// Subnet site selection handler
+subnetSiteSelect.addEventListener('change', () => {
+    const sito = subnetSiteSelect.value;
+
+    if (sito) {
+        // Hide manual credentials and auto-fill from site
+        subnetManualCreds.style.display = 'none';
+        const site = sites.find(s => s.sito === sito);
+        if (site && site.network) {
+            subnetInput.value = site.network;
+        }
+    } else {
+        // Show manual credentials
+        subnetManualCreds.style.display = 'block';
+    }
+});
+
+// Mutex for filter checkboxes (only one can be selected)
+backupCoreOnly.addEventListener('change', () => {
+    if (backupCoreOnly.checked) {
+        backupL2Only.checked = false;
+    }
+});
+
+backupL2Only.addEventListener('change', () => {
+    if (backupL2Only.checked) {
+        backupCoreOnly.checked = false;
+    }
+});
+
+// Subnet form submission
+subnetForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const subnet = subnetInput.value.trim();
+    const sito = subnetSiteSelect.value;
+
+    // Validation
+    if (!subnet) {
+        showSubnetStatus('Inserisci una subnet CIDR', 'error');
+        return;
+    }
+
+    // Validate CIDR format
+    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+    if (!cidrRegex.test(subnet)) {
+        showSubnetStatus('Formato subnet non valido. Usa formato CIDR (es. 10.10.4.0/24)', 'error');
+        return;
+    }
+
+    // Build payload
+    const payload = {
+        subnet: subnet,
+        backup_core_only: backupCoreOnly.checked,
+        backup_l2_only: backupL2Only.checked,
+    };
+
+    if (sito) {
+        payload.sito = sito;
+    } else {
+        // Manual credentials
+        const username = subnetUsername.value.trim();
+        const password = subnetPassword.value;
+        const usernameCore = subnetUsernameCore.value.trim();
+        const passwordCore = subnetPasswordCore.value;
+
+        if (!username || !password) {
+            showSubnetStatus('Username e password L2 sono obbligatori', 'error');
+            return;
+        }
+
+        payload.username = username;
+        payload.password = password;
+        payload.username_core = usernameCore || username;
+        payload.password_core = passwordCore || password;
+    }
+
+    // Show progress
+    showSubnetProgress();
+
+    try {
+        const response = await fetch('/api/backup/discover-and-backup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        hideSubnetProgress();
+
+        if (data.success) {
+            if (data.message) {
+                // No devices found
+                showSubnetStatus(data.message, 'info');
+                hideSubnetResults();
+            } else {
+                showSubnetStatus('Backup subnet completato!', 'success');
+                displaySubnetResults(data);
+                loadHistory(); // Refresh history
+            }
+        } else {
+            showSubnetStatus(`Errore: ${data.error}`, 'error');
+            hideSubnetResults();
+        }
+    } catch (error) {
+        hideSubnetProgress();
+        showSubnetStatus(`Errore di connessione: ${error.message}`, 'error');
+        hideSubnetResults();
+    }
+});
+
+// Subnet status message
+function showSubnetStatus(message, type) {
+    subnetStatusMessage.textContent = message;
+    subnetStatusMessage.className = `status-message ${type}`;
+    subnetStatusMessage.classList.remove('hidden');
+}
+
+function hideSubnetStatus() {
+    subnetStatusMessage.classList.add('hidden');
+}
+
+// Subnet progress
+function showSubnetProgress() {
+    subnetProgress.classList.remove('hidden');
+    stepDiscovery.classList.add('active');
+    stepBackup.classList.remove('active', 'complete');
+    subnetProgressFill.style.width = '30%';
+    subnetProgressText.textContent = 'Discovery...';
+
+    // Simulate progress steps
+    setTimeout(() => {
+        stepDiscovery.classList.remove('active');
+        stepDiscovery.classList.add('complete');
+        stepBackup.classList.add('active');
+        subnetProgressFill.style.width = '70%';
+        subnetProgressText.textContent = 'Backup...';
+    }, 3000);
+}
+
+function hideSubnetProgress() {
+    subnetProgress.classList.add('hidden');
+    stepDiscovery.classList.remove('active', 'complete');
+    stepBackup.classList.remove('active', 'complete');
+    subnetProgressFill.style.width = '0%';
+}
+
+// Display subnet results
+function displaySubnetResults(data) {
+    subnetResultsSection.classList.remove('hidden');
+
+    const discovery = data.discovery || {};
+    const backup = data.backup || {};
+
+    // Stats
+    discoveryStats.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-value">${discovery.total_scanned || 0}</div>
+            <div class="stat-label">IP Scansionati</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${discovery.devices_found || 0}</div>
+            <div class="stat-label">Dispositivi Trovati</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-value">${backup.successful || 0}</div>
+            <div class="stat-label">Backup Riusciti</div>
+        </div>
+        <div class="stat-card ${backup.failed_count > 0 ? 'error' : ''}">
+            <div class="stat-value">${backup.failed_count || 0}</div>
+            <div class="stat-label">Backup Falliti</div>
+        </div>
+    `;
+
+    // Combine results and failed
+    const allDevices = [
+        ...(backup.results || []),
+        ...(backup.failed || [])
+    ].sort((a, b) => a.ip.localeCompare(b.ip));
+
+    // Devices table
+    if (allDevices.length === 0) {
+        devicesTbody.innerHTML = '<tr><td colspan="6" class="loading">Nessun dispositivo</td></tr>';
+        return;
+    }
+
+    devicesTbody.innerHTML = allDevices.map(device => {
+        const typeBadge = device.type === 'core'
+            ? '<span class="badge badge-core">Core</span>'
+            : '<span class="badge badge-l2">L2</span>';
+
+        const statusBadge = device.success
+            ? '<span class="badge badge-success">OK</span>'
+            : '<span class="badge badge-error">Fallito</span>';
+
+        const backupId = device.backup_id ? `#${device.backup_id}` : '-';
+
+        const note = device.error
+            ? `<span class="error-text">${device.error}</span>`
+            : (device.has_changes ? 'Config modificata' : (device.is_duplicate ? 'Invariata' : '-'));
+
+        return `
+            <tr class="${device.success ? '' : 'row-error'}">
+                <td><strong>${device.ip}</strong></td>
+                <td>${device.hostname || '-'}</td>
+                <td>${typeBadge}</td>
+                <td>${statusBadge}</td>
+                <td>${backupId}</td>
+                <td>${note}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function hideSubnetResults() {
+    subnetResultsSection.classList.add('hidden');
+}

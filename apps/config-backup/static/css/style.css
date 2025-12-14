@@ -634,3 +634,252 @@ body.light .icon-moon { display: block; }
         display: none;
     }
 }
+
+/* ========================================
+   SUBNET BACKUP SECTION
+   ======================================== */
+
+/* Form hint text */
+.form-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Credentials group */
+.credentials-group {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.credentials-group h4 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+/* Checkbox group */
+.checkbox-group {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-blue);
+}
+
+/* Progress Section */
+.subnet-progress {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    color: var(--text-muted);
+    transition: color 0.3s;
+}
+
+.progress-step.active {
+    color: var(--accent-blue);
+}
+
+.progress-step.active .step-icon svg {
+    animation: pulse 1s infinite;
+}
+
+.progress-step.complete {
+    color: var(--accent-green);
+}
+
+.step-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-step.active .step-icon {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.progress-step.complete .step-icon {
+    background: rgba(34, 197, 94, 0.2);
+}
+
+.step-text {
+    font-size: 0.9375rem;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    min-width: 80px;
+    text-align: right;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Discovery Stats */
+.discovery-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    padding: 1.25rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-card .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.stat-card.success .stat-value {
+    color: var(--accent-green);
+}
+
+.stat-card.error .stat-value {
+    color: var(--accent-red);
+}
+
+/* Devices Table */
+.devices-table-container {
+    overflow-x: auto;
+}
+
+.devices-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.devices-table th,
+.devices-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.devices-table th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.devices-table td {
+    font-size: 0.875rem;
+}
+
+.devices-table tbody tr:hover {
+    background: var(--bg-card-hover);
+}
+
+.devices-table .row-error {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.devices-table .row-error:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Device type badges */
+.badge-core {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+}
+
+.badge-l2 {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-blue);
+}
+
+.badge-success {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--accent-green);
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--accent-red);
+}
+
+.error-text {
+    color: var(--accent-red);
+    font-size: 0.8125rem;
+}
+
+/* Responsive for subnet section */
+@media (max-width: 768px) {
+    .discovery-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .checkbox-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}

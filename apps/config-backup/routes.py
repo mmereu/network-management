@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, render_template, send_from_direct
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ipaddress
+import requests
 
 # Support both module and standalone execution
 try:
@@ -363,6 +364,249 @@ def download_backup(backup_id):
         as_attachment=True,
         download_name=f"{backup['sito']}_{filename}"
     )
+
+
+@bp.route('/api/backup/discover-and-backup', methods=['POST'])
+def discover_and_backup():
+    """
+    Discover devices in subnet then backup configurations.
+
+    Workflow:
+    1. Call discovery API to find devices via SNMP
+    2. Classify devices (Core .251 vs L2)
+    3. Apply correct credentials per device type
+    4. Execute parallel backups
+
+    Request JSON:
+        - subnet: CIDR notation (e.g., 10.10.4.0/24)
+        - sito: Site ID for credential lookup (optional)
+        - username: L2 switch username (if no sito)
+        - password: L2 switch password (if no sito)
+        - username_core: Core switch username (optional)
+        - password_core: Core switch password (optional)
+        - backup_core_only: Only backup core switches (default: false)
+        - backup_l2_only: Only backup L2 switches (default: false)
+
+    Returns:
+        JSON with discovery results and backup status per device
+    """
+    data = request.get_json() or {}
+
+    subnet = data.get('subnet')
+    sito = data.get('sito')
+
+    # Validate subnet
+    if not subnet:
+        return jsonify({'success': False, 'error': 'Subnet is required'}), 400
+
+    try:
+        network = ipaddress.ip_network(subnet, strict=False)
+    except ValueError as e:
+        return jsonify({'success': False, 'error': f'Invalid subnet: {e}'}), 400
+
+    # Get credentials based on source
+    if sito:
+        site = get_site_by_id(sito)
+        if not site:
+            return jsonify({'success': False, 'error': f'Site not found: {sito}'}), 404
+
+        creds_l2 = {
+            'username': site['utente'],
+            'password': site['password']
+        }
+        creds_core = {
+            'username': site['utente_core'] or site['utente'],
+            'password': site['password_core'] or site['password']
+        }
+        nome_sito = site['nome']
+    else:
+        creds_l2 = {
+            'username': data.get('username'),
+            'password': data.get('password')
+        }
+        creds_core = {
+            'username': data.get('username_core') or data.get('username'),
+            'password': data.get('password_core') or data.get('password')
+        }
+        nome_sito = data.get('nome_sito', '')
+
+    # Validate credentials
+    if not creds_l2.get('username') or not creds_l2.get('password'):
+        return jsonify({
+            'success': False,
+            'error': 'Username and password are required'
+        }), 400
+
+    # Step 1: Discovery
+    logger.info(f"Starting discovery for subnet: {subnet}")
+    discovery_result = call_discovery_api(subnet)
+
+    if not discovery_result.get('success'):
+        return jsonify({
+            'success': False,
+            'error': 'Discovery failed',
+            'details': discovery_result.get('error', 'Unknown error')
+        }), 500
+
+    devices = discovery_result.get('devices', [])
+    total_scanned = discovery_result.get('total_scanned', 0)
+
+    if not devices:
+        return jsonify({
+            'success': True,
+            'message': 'No devices found in subnet',
+            'discovery': {
+                'total_scanned': total_scanned,
+                'devices_found': 0
+            }
+        })
+
+    # Step 2: Filter and classify devices
+    backup_core_only = data.get('backup_core_only', False)
+    backup_l2_only = data.get('backup_l2_only', False)
+
+    devices_to_backup = []
+    for device in devices:
+        ip = device.get('ip', '')
+        is_core = ip.endswith('.251')
+
+        # Apply filters
+        if backup_core_only and not is_core:
+            continue
+        if backup_l2_only and is_core:
+            continue
+
+        devices_to_backup.append({
+            'ip': ip,
+            'hostname': device.get('hostname', ''),
+            'model': device.get('model', ''),
+            'type': 'core' if is_core else 'l2',
+            'credentials': creds_core if is_core else creds_l2
+        })
+
+    if not devices_to_backup:
+        return jsonify({
+            'success': True,
+            'message': 'No devices match the filter criteria',
+            'discovery': {
+                'total_scanned': total_scanned,
+                'devices_found': len(devices),
+                'devices_filtered': 0
+            }
+        })
+
+    # Step 3: Parallel backup
+    logger.info(f"Starting backup for {len(devices_to_backup)} devices")
+    results = []
+    failed = []
+
+    def backup_device(device):
+        """Backup single device with appropriate credentials"""
+        device_ip = device['ip']
+        try:
+            with SSHManager(
+                device_ip,
+                device['credentials']['username'],
+                device['credentials']['password']
+            ) as ssh:
+                config = ssh.get_current_configuration()
+                connection_method = ssh.connection_method
+
+            result = save_backup(
+                sito=sito or device_ip,
+                nome_sito=nome_sito,
+                ip=device_ip,
+                config=config,
+                connection_method=connection_method
+            )
+
+            logger.info(f"Backup successful for {device_ip}")
+            return {
+                'success': True,
+                'ip': device_ip,
+                'hostname': device.get('hostname', ''),
+                'type': device['type'],
+                'backup_id': result.get('id'),
+                'has_changes': result.get('has_changes', False),
+                'is_duplicate': result.get('is_duplicate', False),
+                'connection_method': connection_method
+            }
+        except Exception as e:
+            logger.error(f"Backup failed for {device_ip}: {e}")
+            return {
+                'success': False,
+                'ip': device_ip,
+                'hostname': device.get('hostname', ''),
+                'type': device['type'],
+                'error': str(e)
+            }
+
+    # Execute backups in parallel (max 4 workers to avoid overloading)
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {executor.submit(backup_device, d): d for d in devices_to_backup}
+
+        for future in as_completed(futures):
+            result = future.result()
+            if result['success']:
+                results.append(result)
+            else:
+                failed.append(result)
+
+    # Summary
+    logger.info(f"Subnet backup completed: {len(results)} success, {len(failed)} failed")
+
+    return jsonify({
+        'success': True,
+        'discovery': {
+            'total_scanned': total_scanned,
+            'devices_found': len(devices),
+            'devices_to_backup': len(devices_to_backup)
+        },
+        'backup': {
+            'total': len(devices_to_backup),
+            'successful': len(results),
+            'failed_count': len(failed),
+            'results': results,
+            'failed': failed
+        }
+    })
+
+
+def call_discovery_api(subnet):
+    """
+    Call the existing Huawei Network Discovery API.
+
+    Args:
+        subnet: Network in CIDR notation
+
+    Returns:
+        dict: Discovery results with devices list
+    """
+    try:
+        # Call discovery API (runs on same server via nginx)
+        response = requests.post(
+            'http://localhost/api/discover',
+            json={'network': subnet, 'sync': True},
+            timeout=180  # Discovery can take 2-3 minutes for /24
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {
+                'success': False,
+                'error': f'Discovery API returned {response.status_code}'
+            }
+
+    except requests.exceptions.Timeout:
+        logger.error(f"Discovery timeout for subnet {subnet}")
+        return {'success': False, 'error': 'Discovery timeout'}
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Cannot connect to discovery API: {e}")
+        return {'success': False, 'error': 'Cannot connect to discovery API'}
+    except Exception as e:
+        logger.error(f"Discovery API call failed: {e}")
+        return {'success': False, 'error': str(e)}
 
 
 @bp.route('/api/health', methods=['GET'])
