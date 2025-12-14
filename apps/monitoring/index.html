@@ -545,7 +545,7 @@
         <!-- Applications Grid -->
         <div class="apps-grid">
             <!-- Migration Tool -->
-            <a href="/migration-tool/" class="app-card" style="--gradient-from: #3b82f6; --gradient-to: #06b6d4;">
+            <a href="#" data-port="9999" data-path="/" class="app-card app-link" style="--gradient-from: #3b82f6; --gradient-to: #06b6d4;">
                 <div class="app-card-header">
                     <div class="app-icon">🔄</div>
                     <div class="app-status">
@@ -567,7 +567,7 @@
             </a>
 
             <!-- Config Switch React -->
-            <a href="/config-switch/" class="app-card" style="--gradient-from: #a855f7; --gradient-to: #ec4899;">
+            <a href="#" data-port="8443" data-path="/config-switch" class="app-card app-link" style="--gradient-from: #a855f7; --gradient-to: #ec4899;">
                 <div class="app-card-header">
                     <div class="app-icon">🔧</div>
                     <div class="app-status">
@@ -593,7 +593,7 @@
             </a>
 
             <!-- Port Mapper -->
-            <a href="/port-mapper/" class="app-card" style="--gradient-from: #10b981; --gradient-to: #34d399;">
+            <a href="#" data-port="5002" data-path="/" class="app-card app-link" style="--gradient-from: #10b981; --gradient-to: #34d399;">
                 <div class="app-card-header">
                     <div class="app-icon">🗺️</div>
                     <div class="app-status">
@@ -637,7 +637,7 @@
             </a>
 
             <!-- SSH Terminal -->
-            <a href="/ssh-terminal/" class="app-card" style="--gradient-from: #8b5cf6; --gradient-to: #a855f7;">
+            <a href="#" data-port="8443" data-path="/" class="app-card app-link" style="--gradient-from: #8b5cf6; --gradient-to: #a855f7;">
                 <div class="app-card-header">
                     <div class="app-icon">💻</div>
                     <div class="app-status">
@@ -693,6 +693,17 @@
                 sunIcon.style.display = 'none';
                 moonIcon.style.display = 'block';
             }
+
+            // Handle dynamic app links
+            document.querySelectorAll('.app-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const port = link.dataset.port;
+                    const path = link.dataset.path || '/';
+                    const url = `http://${window.location.hostname}:${port}${path}`;
+                    window.open(url, '_blank');
+                });
+            });
         });
     </script>
 </body>
