@@ -81,16 +81,20 @@ def parse_pdv_csv(filepath=None):
 
 
 def _clean_password(password):
-    """Clean password field from CSV escaping"""
+    """Clean password field from CSV escaping.
+
+    Note: Python's csv module already handles quote unescaping,
+    so we only need to handle edge cases where quotes might remain.
+    """
     if not password:
         return password
 
-    # Remove surrounding quotes
+    # Only remove surrounding quotes if they exist (shouldn't happen with csv module)
     if password.startswith('"') and password.endswith('"'):
         password = password[1:-1]
 
-    # Unescape double quotes (CSV standard)
-    password = password.replace('""', '"')
+    # DO NOT unescape double quotes - csv module already does this
+    # The password may legitimately contain "" as part of the actual password
 
     return password
 
