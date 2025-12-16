@@ -26,7 +26,7 @@ except ImportError:
         get_latest_diff,
         BACKUPS_DIR,
     )
-    from csv_parser import parse_pdv_csv, get_site_by_id, get_sites_dropdown
+    from csv_parser import parse_pdv_csv, get_site_by_id, get_sites_dropdown, get_all_credentials_for_site
     import database
 
 logger = logging.getLogger(__name__)
@@ -405,6 +405,7 @@ def discover_and_backup():
         return jsonify({'success': False, 'error': f'Invalid subnet: {e}'}), 400
 
     # Get credentials based on source
+    all_credentials = []  # List of fallback credentials
     if sito:
         site = get_site_by_id(sito)
         if not site:
@@ -419,6 +420,10 @@ def discover_and_backup():
             'password': site['password_core'] or site['password']
         }
         nome_sito = site['nome']
+
+        # Get all credential sets for fallback
+        all_credentials = get_all_credentials_for_site(sito)
+        logger.info(f"Found {len(all_credentials)} credential sets for site {sito}")
     else:
         creds_l2 = {
             'username': data.get('username'),
@@ -481,7 +486,8 @@ def discover_and_backup():
             'hostname': device.get('hostname', ''),
             'model': device.get('model', ''),
             'type': 'core' if is_core else 'l2',
-            'credentials': creds_core if is_core else creds_l2
+            'credentials': creds_core if is_core else creds_l2,
+            'fallback_credentials': all_credentials if not is_core else []
         })
 
     if not devices_to_backup:
@@ -501,45 +507,72 @@ def discover_and_backup():
     failed = []
 
     def backup_device(device):
-        """Backup single device with appropriate credentials"""
+        """Backup single device with appropriate credentials and fallback support"""
         device_ip = device['ip']
-        try:
-            with SSHManager(
-                device_ip,
-                device['credentials']['username'],
-                device['credentials']['password']
-            ) as ssh:
-                config = ssh.get_current_configuration()
-                connection_method = ssh.connection_method
+        primary_creds = device['credentials']
+        fallback_list = device.get('fallback_credentials', [])
 
-            result = save_backup(
-                sito=sito or device_ip,
-                nome_sito=nome_sito,
-                ip=device_ip,
-                config=config,
-                connection_method=connection_method
-            )
+        # Build list of credentials to try (primary first, then fallbacks)
+        credentials_to_try = [primary_creds]
+        for fb in fallback_list:
+            cred = {'username': fb['username'], 'password': fb['password']}
+            # Avoid duplicates
+            if cred not in credentials_to_try:
+                credentials_to_try.append(cred)
 
-            logger.info(f"Backup successful for {device_ip}")
-            return {
-                'success': True,
-                'ip': device_ip,
-                'hostname': device.get('hostname', ''),
-                'type': device['type'],
-                'backup_id': result.get('id'),
-                'has_changes': result.get('has_changes', False),
-                'is_duplicate': result.get('is_duplicate', False),
-                'connection_method': connection_method
-            }
-        except Exception as e:
-            logger.error(f"Backup failed for {device_ip}: {e}")
-            return {
-                'success': False,
-                'ip': device_ip,
-                'hostname': device.get('hostname', ''),
-                'type': device['type'],
-                'error': str(e)
-            }
+        last_error = None
+        for idx, creds in enumerate(credentials_to_try):
+            try:
+                with SSHManager(
+                    device_ip,
+                    creds['username'],
+                    creds['password']
+                ) as ssh:
+                    config = ssh.get_current_configuration()
+                    connection_method = ssh.connection_method
+
+                result = save_backup(
+                    sito=sito or device_ip,
+                    nome_sito=nome_sito,
+                    ip=device_ip,
+                    config=config,
+                    connection_method=connection_method
+                )
+
+                if idx > 0:
+                    logger.info(f"Backup successful for {device_ip} (fallback credential #{idx})")
+                else:
+                    logger.info(f"Backup successful for {device_ip}")
+
+                return {
+                    'success': True,
+                    'ip': device_ip,
+                    'hostname': device.get('hostname', ''),
+                    'type': device['type'],
+                    'backup_id': result.get('id'),
+                    'has_changes': result.get('has_changes', False),
+                    'is_duplicate': result.get('is_duplicate', False),
+                    'connection_method': connection_method,
+                    'used_fallback': idx > 0
+                }
+            except Exception as e:
+                last_error = str(e)
+                # Only try fallback for authentication errors
+                if 'Authentication failed' in str(e) or 'Invalid username' in str(e):
+                    if idx < len(credentials_to_try) - 1:
+                        logger.debug(f"Auth failed for {device_ip} with cred #{idx}, trying fallback")
+                        continue
+                # For non-auth errors, don't try fallback
+                break
+
+        logger.error(f"Backup failed for {device_ip}: {last_error}")
+        return {
+            'success': False,
+            'ip': device_ip,
+            'hostname': device.get('hostname', ''),
+            'type': device['type'],
+            'error': last_error
+        }
 
     # Execute backups in parallel (max 4 workers to avoid overloading)
     with ThreadPoolExecutor(max_workers=4) as executor:

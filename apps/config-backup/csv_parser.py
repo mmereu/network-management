@@ -100,12 +100,46 @@ def _clean_password(password):
 
 
 def get_site_by_id(sito_id, filepath=None):
-    """Get a specific site by its ID"""
+    """Get a specific site by its ID (returns first match)"""
     sites = parse_pdv_csv(filepath)
     for site in sites:
         if site['sito'] == str(sito_id):
             return site
     return None
+
+
+def get_all_credentials_for_site(sito_id, filepath=None):
+    """
+    Get all credential sets for a site ID.
+
+    Returns a list of unique credential combinations for sites with multiple entries.
+    Useful for credential fallback when some switches use different credentials.
+
+    Returns:
+        list[dict]: List of credential sets with keys:
+            - username: L2 switch username
+            - password: L2 switch password
+            - username_core: Core switch username
+            - password_core: Core switch password
+    """
+    sites = parse_pdv_csv(filepath)
+    credentials = []
+    seen = set()
+
+    for site in sites:
+        if site['sito'] == str(sito_id):
+            # Create a unique key for this credential set
+            cred_key = (site['utente'], site['password'])
+            if cred_key not in seen:
+                seen.add(cred_key)
+                credentials.append({
+                    'username': site['utente'],
+                    'password': site['password'],
+                    'username_core': site['utente_core'] or site['utente'],
+                    'password_core': site['password_core'] or site['password'],
+                })
+
+    return credentials
 
 
 def get_site_by_name(nome, filepath=None):
