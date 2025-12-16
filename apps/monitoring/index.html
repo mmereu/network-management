@@ -6,7 +6,7 @@
     <title>Network Management - Enterprise Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,539 +15,553 @@
         }
 
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: rgba(18, 18, 26, 0.6);
-            --bg-card-hover: rgba(30, 30, 45, 0.8);
-            --border-color: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.12);
+            --bg-main: #0f1535;
+            --bg-card: linear-gradient(127.09deg, rgba(6, 11, 40, 0.94) 19.41%, rgba(10, 14, 35, 0.49) 76.65%);
+            --bg-sidebar: linear-gradient(127.09deg, rgba(6, 11, 40, 0.94) 19.41%, rgba(10, 14, 35, 0.49) 76.65%);
+            --border-gradient: linear-gradient(135deg, rgba(0, 117, 255, 0.5) 0%, rgba(0, 242, 254, 0.2) 100%);
             --text-primary: #ffffff;
-            --text-secondary: #8b8b9e;
-            --text-muted: #5a5a6e;
-            --accent-primary: #6366f1;
-            --accent-secondary: #8b5cf6;
-            --accent-tertiary: #a855f7;
-            --accent-success: #10b981;
-            --accent-warning: #f59e0b;
-            --accent-danger: #ef4444;
-            --accent-info: #06b6d4;
-            --glow-primary: rgba(99, 102, 241, 0.4);
-            --glow-secondary: rgba(139, 92, 246, 0.3);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 40px var(--glow-primary);
-        }
-
-        body.light {
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-card: rgba(255, 255, 255, 0.8);
-            --bg-card-hover: rgba(255, 255, 255, 0.95);
-            --border-color: rgba(0, 0, 0, 0.06);
-            --border-hover: rgba(0, 0, 0, 0.12);
-            --text-primary: #0f172a;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-            --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.12);
-            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --accent-blue: #0075ff;
+            --accent-cyan: #00f2fe;
+            --accent-gradient: linear-gradient(135deg, #0075ff 0%, #00f2fe 100%);
+            --accent-purple: #7928ca;
+            --accent-pink: #ff0080;
+            --success: #01b574;
+            --warning: #ffb547;
+            --danger: #e31a1a;
+            --glow-blue: 0 0 30px rgba(0, 117, 255, 0.4);
+            --glow-cyan: 0 0 30px rgba(0, 242, 254, 0.3);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-main);
             color: var(--text-primary);
             min-height: 100vh;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-x: hidden;
+            display: flex;
         }
 
-        /* Animated mesh gradient background */
-        .bg-mesh {
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            min-height: 100vh;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(120px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
             position: fixed;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 0;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
         }
 
-        .bg-mesh::before {
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 24px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--glow-blue);
+        }
+
+        .brand-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text span {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: var(--glow-blue);
+        }
+
+        .nav-item.active::before {
             content: '';
             position: absolute;
-            width: 150%;
-            height: 150%;
-            top: -25%;
-            left: -25%;
-            background:
-                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(99, 102, 241, 0.15), transparent 50%),
-                radial-gradient(ellipse 60% 80% at 80% 20%, rgba(139, 92, 246, 0.12), transparent 50%),
-                radial-gradient(ellipse 50% 60% at 60% 80%, rgba(6, 182, 212, 0.1), transparent 50%),
-                radial-gradient(ellipse 80% 40% at 10% 90%, rgba(168, 85, 247, 0.08), transparent 50%);
-            animation: meshFloat 30s ease-in-out infinite;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: white;
+            border-radius: 0 4px 4px 0;
         }
 
-        @keyframes meshFloat {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(2%, -2%) rotate(1deg); }
-            50% { transform: translate(-1%, 2%) rotate(-0.5deg); }
-            75% { transform: translate(-2%, -1%) rotate(0.5deg); }
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
         }
 
-        /* Noise texture overlay */
-        .bg-mesh::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            opacity: 0.015;
+        .nav-item.active .nav-icon {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 24px 32px;
+            min-height: 100vh;
         }
 
         /* Header */
         .header {
-            position: sticky;
-            top: 0;
-            border-bottom: 1px solid var(--border-color);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            background: rgba(10, 10, 15, 0.7);
-            z-index: 100;
-        }
-
-        body.light .header {
-            background: rgba(248, 250, 252, 0.85);
-        }
-
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 32px;
         }
 
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-glow), var(--shadow-md);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .logo-icon::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) rotate(45deg); }
-            100% { transform: translateX(200%) rotate(45deg); }
-        }
-
-        .logo-text h1 {
-            font-size: 1.5rem;
+        .header-left h1 {
+            font-size: 28px;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.02em;
+            margin-bottom: 4px;
         }
 
-        .logo-text p {
-            font-size: 0.8rem;
+        .header-left .breadcrumb {
+            font-size: 13px;
             color: var(--text-muted);
-            font-weight: 500;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+        }
+
+        .header-left .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 16px;
         }
 
-        .server-status {
+        .search-box {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.625rem 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            backdrop-filter: blur(10px);
+            width: 240px;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-success);
-            border-radius: 50%;
-            box-shadow: 0 0 12px var(--accent-success);
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            width: 100%;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
+        .search-box input::placeholder {
+            color: var(--text-muted);
         }
 
-        .server-status span {
-            font-size: 0.8rem;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .divider {
-            width: 1px;
-            height: 16px;
-            background: var(--border-color);
-        }
-
-        .theme-toggle {
+        .header-btn {
             width: 44px;
             height: 44px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
             color: var(--text-secondary);
+            transition: all 0.3s ease;
         }
 
-        .theme-toggle:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2.5rem 2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Section Title */
-        .section-title {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border-color), transparent);
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
         }
 
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.25rem;
-            margin-bottom: 3rem;
-        }
-
-        @media (max-width: 900px) {
-            .stats-grid { grid-template-columns: 1fr; }
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
         }
 
         .stat-card {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 1.5rem;
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px 24px;
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .stat-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0, 117, 255, 0.3), transparent 50%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
         }
 
-        .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--border-hover);
-            box-shadow: var(--shadow-md);
+        .stat-card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .stat-info h3 {
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            font-size: 12px;
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
 
-        .stat-info p {
-            font-size: 2.5rem;
+        .stat-info .value {
+            font-size: 28px;
             font-weight: 700;
-            letter-spacing: -0.02em;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-info .change {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 4px;
         }
 
         .stat-icon {
             width: 56px;
             height: 56px;
+            background: var(--accent-gradient);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--glow-blue);
+        }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: var(--border-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .welcome-content h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .welcome-content h2 span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        .welcome-image {
+            width: 200px;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(0, 117, 255, 0.2), rgba(0, 242, 254, 0.1));
             border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            font-size: 64px;
         }
 
-        .stat-icon.blue {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
-            color: var(--accent-primary);
-            box-shadow: 0 0 24px rgba(99, 102, 241, 0.2);
+        /* Apps Section */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
-        .stat-icon.green {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.1));
-            color: var(--accent-success);
-            box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
         }
 
-        .stat-icon.purple {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.1));
-            color: var(--accent-tertiary);
-            box-shadow: 0 0 24px rgba(168, 85, 247, 0.2);
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
-        /* Apps Grid */
         .apps-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
         }
 
         .app-card {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 1.5rem;
-            backdrop-filter: blur(20px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 24px;
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
             cursor: pointer;
             text-decoration: none;
             color: inherit;
             display: block;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .app-card::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .app-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--card-accent, rgba(0, 117, 255, 0.4)), transparent 60%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
         }
 
         .app-card:hover {
-            transform: translateY(-8px) scale(1.01);
-            border-color: var(--border-hover);
-            box-shadow: var(--shadow-lg), 0 0 40px rgba(99, 102, 241, 0.1);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), var(--glow-blue);
         }
 
         .app-card:hover::before {
-            opacity: 0.06;
+            opacity: 1;
         }
 
         .app-card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1.25rem;
-            position: relative;
-            z-index: 1;
+            margin-bottom: 20px;
         }
 
         .app-icon {
             width: 52px;
             height: 52px;
             border-radius: 14px;
-            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            background: var(--icon-gradient, var(--accent-gradient));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .app-icon::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 60%);
+            font-size: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
         }
 
         .app-card:hover .app-icon {
-            transform: scale(1.1) rotate(-3deg);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            transform: scale(1.1) rotate(-5deg);
         }
 
         .app-status {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-success);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--accent-success);
-        }
-
-        .status-badge {
-            padding: 0.375rem 0.75rem;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(1, 181, 116, 0.15);
+            border: 1px solid rgba(1, 181, 116, 0.3);
             border-radius: 8px;
-            font-size: 0.7rem;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            font-size: 11px;
             font-weight: 600;
-            color: var(--accent-success);
+            color: var(--success);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
         }
 
-        .app-card-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .app-card-content h3 {
-            font-size: 1.125rem;
+        .app-card h3 {
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s ease;
-            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
         }
 
         .app-card:hover h3 {
-            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            background: var(--accent-gradient);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .app-card-content p {
-            font-size: 0.875rem;
+        .app-card p {
+            font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 1.25rem;
-            line-height: 1.6;
+            line-height: 1.5;
+            margin-bottom: 16px;
         }
 
-        .app-details {
+        .app-meta {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
+            gap: 12px;
         }
 
-        .app-detail {
-            display: inline-flex;
+        .meta-item {
+            display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            padding: 0.375rem 0.75rem;
+            gap: 6px;
+            padding: 8px 12px;
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 8px;
+            font-size: 12px;
         }
 
-        .app-detail span {
+        .meta-item span {
             color: var(--text-muted);
         }
 
-        .app-detail code {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-size: 0.75rem;
-            color: var(--accent-info);
+        .meta-item code {
+            color: var(--accent-cyan);
+            font-family: 'SF Mono', monospace;
             font-weight: 500;
         }
 
         .app-button {
             width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            padding: 14px;
+            background: var(--accent-gradient);
             border: none;
             border-radius: 12px;
             color: white;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 13px;
             cursor: pointer;
+            margin-top: 16px;
             opacity: 0;
             transform: translateY(10px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 0.02em;
-        }
-
-        .app-button::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .app-card:hover .app-button {
@@ -556,346 +570,399 @@
         }
 
         .app-button:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            transform: scale(1.02);
+            box-shadow: var(--glow-blue);
         }
 
         /* Footer */
         .footer {
             text-align: center;
-            padding: 2rem;
+            padding: 32px;
             color: var(--text-muted);
-            font-size: 0.8rem;
-            position: relative;
-            z-index: 1;
+            font-size: 12px;
+            margin-top: 48px;
         }
 
-        .footer a {
-            color: var(--accent-primary);
-            text-decoration: none;
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
         }
 
         @media (max-width: 768px) {
-            .header-container {
-                flex-direction: column;
-                gap: 1rem;
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
-
-            .server-status {
-                width: 100%;
-                justify-content: center;
-            }
-
             .apps-grid {
                 grid-template-columns: 1fr;
             }
-
-            .container {
-                padding: 1.5rem 1rem;
+            .welcome-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .welcome-image {
+                margin-top: 24px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
             }
         }
     </style>
 </head>
 <body>
-    <div class="bg-mesh"></div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                Network Management
+                <span>Enterprise</span>
+            </div>
+        </div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-container">
-            <div class="logo-section">
-                <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                        <path d="M2 12l10 5 10-5"/>
-                    </svg>
-                </div>
-                <div class="logo-text">
-                    <h1>Network Management</h1>
-                    <p>Enterprise Dashboard</p>
-                </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="#" class="nav-item active">
+                    <div class="nav-icon">📊</div>
+                    Dashboard
+                </a>
             </div>
 
-            <div class="header-right">
-                <div class="server-status">
-                    <div class="status-dot"></div>
-                    <span>Online</span>
-                    <div class="divider"></div>
-                    <span>172.24.1.33</span>
-                    <div class="divider"></div>
-                    <span>API: 5001</span>
-                </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Applications</div>
+                <a href="#" data-port="9999" class="nav-item app-link">
+                    <div class="nav-icon">🔄</div>
+                    Migration Tool
+                </a>
+                <a href="#" data-port="8443" data-path="/config-switch" class="nav-item app-link">
+                    <div class="nav-icon">🔧</div>
+                    Config Switch
+                </a>
+                <a href="#" data-port="5002" class="nav-item app-link">
+                    <div class="nav-icon">🗺️</div>
+                    Port Mapper
+                </a>
+                <a href="/discovery.html" class="nav-item">
+                    <div class="nav-icon">🔍</div>
+                    Network Discovery
+                </a>
+                <a href="#" data-port="8443" class="nav-item app-link">
+                    <div class="nav-icon">💻</div>
+                    SSH Terminal
+                </a>
+                <a href="#" data-port="5003" class="nav-item app-link">
+                    <div class="nav-icon">💾</div>
+                    Config Backup
+                </a>
+                <a href="#" data-port="4000" data-path="/mac-tracker.html" class="nav-item app-link">
+                    <div class="nav-icon">📍</div>
+                    MAC Tracker
+                </a>
+            </div>
+        </nav>
+    </aside>
 
-                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                    <svg id="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
-                        <circle cx="12" cy="12" r="5"/>
-                        <line x1="12" y1="1" x2="12" y2="3"/>
-                        <line x1="12" y1="21" x2="12" y2="23"/>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                        <line x1="1" y1="12" x2="3" y2="12"/>
-                        <line x1="21" y1="12" x2="23" y2="12"/>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="breadcrumb">
+                    <a href="#">Pages</a> / Dashboard
+                </div>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
                     </svg>
-                    <svg id="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <input type="text" placeholder="Search...">
+                </div>
+                <button class="header-btn" onclick="toggleTheme()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                     </svg>
                 </button>
+                <button class="header-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                </button>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Main Content -->
-    <main class="container">
-        <!-- Stats Section -->
-        <div class="section-title">Overview</div>
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+            <div class="welcome-content">
+                <h2>Welcome back, <span>Admin</span></h2>
+                <p>Monitor and manage your network infrastructure from this centralized dashboard. All systems are operational and running smoothly.</p>
+            </div>
+            <div class="welcome-image">🌐</div>
+        </div>
+
+        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Total Applications</h3>
-                    <p>7</p>
-                </div>
-                <div class="stat-icon blue">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="2" width="20" height="8" rx="2"/>
-                        <rect x="2" y="14" width="20" height="8" rx="2"/>
-                        <line x1="6" y1="6" x2="6.01" y2="6"/>
-                        <line x1="6" y1="18" x2="6.01" y2="18"/>
-                    </svg>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Active Services</h3>
-                    <p style="color: var(--accent-success);">7</p>
-                </div>
-                <div class="stat-icon green">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                    </svg>
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Total Applications</h3>
+                        <div class="value">7</div>
+                        <div class="change">All Active</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2"/>
+                            <rect x="2" y="14" width="20" height="8" rx="2"/>
+                        </svg>
+                    </div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Network Status</h3>
-                    <p style="color: var(--accent-success);">Healthy</p>
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Active Services</h3>
+                        <div class="value">7</div>
+                        <div class="change">100% Uptime</div>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #01b574, #00d4aa);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
                 </div>
-                <div class="stat-icon purple">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                        <path d="M2 12l10 5 10-5"/>
-                    </svg>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Network Status</h3>
+                        <div class="value" style="background: linear-gradient(135deg, #01b574, #00d4aa); -webkit-background-clip: text; background-clip: text;">Healthy</div>
+                        <div class="change">No Issues</div>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #7928ca, #ff0080);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Server IP</h3>
+                        <div class="value" style="font-size: 20px;">172.24.1.33</div>
+                        <div class="change">API: 5001</div>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ffb547, #ff7847);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="20" rx="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Applications Section -->
-        <div class="section-title">Applications</div>
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Applications</h2>
+                <p class="section-subtitle">Click on any card to open the application</p>
+            </div>
+        </div>
+
         <div class="apps-grid">
             <!-- Migration Tool -->
-            <a href="#" data-port="9999" data-path="/" class="app-card app-link" style="--gradient-from: #3b82f6; --gradient-to: #06b6d4;">
+            <a href="#" data-port="9999" class="app-card app-link" style="--card-accent: rgba(59, 130, 246, 0.5); --icon-gradient: linear-gradient(135deg, #3b82f6, #06b6d4);">
                 <div class="app-card-header">
                     <div class="app-icon">🔄</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>Migration Tool</h3>
-                    <p>HP/Huawei to Huawei switch migration utility</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Port:</span>
-                            <code>9999</code>
-                        </div>
+                <h3>Migration Tool</h3>
+                <p>HP/Huawei to Huawei switch migration utility with automated configuration transfer.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>9999</code>
                     </div>
-                    <button class="app-button">Open Application</button>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
 
             <!-- Config Switch React -->
-            <a href="#" data-port="8443" data-path="/config-switch" class="app-card app-link" style="--gradient-from: #a855f7; --gradient-to: #ec4899;">
+            <a href="#" data-port="8443" data-path="/config-switch" class="app-card app-link" style="--card-accent: rgba(168, 85, 247, 0.5); --icon-gradient: linear-gradient(135deg, #a855f7, #ec4899);">
                 <div class="app-card-header">
                     <div class="app-icon">🔧</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>Config Switch React</h3>
-                    <p>Modern configuration management interface</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Port:</span>
-                            <code>8443</code>
-                        </div>
-                        <div class="app-detail">
-                            <span>Path:</span>
-                            <code>/config-switch</code>
-                        </div>
+                <h3>Config Switch React</h3>
+                <p>Modern configuration management interface with real-time switch monitoring.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>8443</code>
                     </div>
-                    <button class="app-button">Open Application</button>
+                    <div class="meta-item">
+                        <span>Path:</span>
+                        <code>/config-switch</code>
+                    </div>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
 
             <!-- Port Mapper -->
-            <a href="#" data-port="5002" data-path="/" class="app-card app-link" style="--gradient-from: #10b981; --gradient-to: #34d399;">
+            <a href="#" data-port="5002" class="app-card app-link" style="--card-accent: rgba(16, 185, 129, 0.5); --icon-gradient: linear-gradient(135deg, #10b981, #34d399);">
                 <div class="app-card-header">
                     <div class="app-icon">🗺️</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>Port Mapper</h3>
-                    <p>Network port mapping and VLAN management</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Port:</span>
-                            <code>5002</code>
-                        </div>
+                <h3>Port Mapper</h3>
+                <p>Network port mapping and VLAN management with visual topology display.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>5002</code>
                     </div>
-                    <button class="app-button">Open Application</button>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
 
             <!-- Network Discovery -->
-            <a href="/discovery.html" class="app-card" style="--gradient-from: #6366f1; --gradient-to: #3b82f6;">
+            <a href="/discovery.html" class="app-card" style="--card-accent: rgba(99, 102, 241, 0.5); --icon-gradient: linear-gradient(135deg, #6366f1, #3b82f6);">
                 <div class="app-card-header">
                     <div class="app-icon">🔍</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>Network Discovery</h3>
-                    <p>Automated SNMP device discovery and scanning</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Protocol:</span>
-                            <code>SNMP</code>
-                        </div>
+                <h3>Network Discovery</h3>
+                <p>Automated SNMP device discovery and network scanning with device inventory.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Protocol:</span>
+                        <code>SNMP</code>
                     </div>
-                    <button class="app-button">Open Application</button>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
 
             <!-- SSH Terminal -->
-            <a href="#" data-port="8443" data-path="/" class="app-card app-link" style="--gradient-from: #8b5cf6; --gradient-to: #a855f7;">
+            <a href="#" data-port="8443" class="app-card app-link" style="--card-accent: rgba(139, 92, 246, 0.5); --icon-gradient: linear-gradient(135deg, #8b5cf6, #a855f7);">
                 <div class="app-card-header">
                     <div class="app-icon">💻</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>SSH Terminal</h3>
-                    <p>Web-based secure shell terminal access</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Port:</span>
-                            <code>8443</code>
-                        </div>
+                <h3>SSH Terminal</h3>
+                <p>Web-based secure shell terminal access for remote device management.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>8443</code>
                     </div>
-                    <button class="app-button">Open Application</button>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
 
             <!-- Config Backup -->
-            <a href="#" data-port="5003" data-path="/" class="app-card app-link" style="--gradient-from: #f97316; --gradient-to: #eab308;">
+            <a href="#" data-port="5003" class="app-card app-link" style="--card-accent: rgba(249, 115, 22, 0.5); --icon-gradient: linear-gradient(135deg, #f97316, #eab308);">
                 <div class="app-card-header">
                     <div class="app-icon">💾</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>Config Backup</h3>
-                    <p>Backup configurazioni switch con diff visuale</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Port:</span>
-                            <code>5003</code>
-                        </div>
+                <h3>Config Backup</h3>
+                <p>Automated configuration backup with visual diff comparison and history.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>5003</code>
                     </div>
-                    <button class="app-button">Open Application</button>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
 
             <!-- MAC Tracker -->
-            <a href="#" data-port="4000" data-path="/mac-tracker.html" class="app-card app-link" style="--gradient-from: #14b8a6; --gradient-to: #06b6d4;">
+            <a href="#" data-port="4000" data-path="/mac-tracker.html" class="app-card app-link" style="--card-accent: rgba(20, 184, 166, 0.5); --icon-gradient: linear-gradient(135deg, #14b8a6, #06b6d4);">
                 <div class="app-card-header">
                     <div class="app-icon">📍</div>
                     <div class="app-status">
-                        <div class="status-indicator"></div>
-                        <span class="status-badge">active</span>
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
                     </div>
                 </div>
-                <div class="app-card-content">
-                    <h3>MAC Tracker</h3>
-                    <p>Tracciamento indirizzi MAC nella rete</p>
-                    <div class="app-details">
-                        <div class="app-detail">
-                            <span>Port:</span>
-                            <code>4000</code>
-                        </div>
+                <h3>MAC Tracker</h3>
+                <p>Track and locate MAC addresses across your network infrastructure.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>4000</code>
                     </div>
-                    <button class="app-button">Open Application</button>
                 </div>
+                <button class="app-button">Open Application</button>
             </a>
         </div>
+
+        <footer class="footer">
+            <p>Network Management Dashboard &copy; 2025 | Powered by Vision UI Style</p>
+        </footer>
     </main>
 
-    <footer class="footer">
-        <p>Network Management Dashboard &copy; 2025</p>
-    </footer>
-
     <script>
-        function toggleTheme() {
-            const body = document.body;
-            const sunIcon = document.getElementById('sun-icon');
-            const moonIcon = document.getElementById('moon-icon');
-
-            body.classList.toggle('light');
-
-            if (body.classList.contains('light')) {
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-                localStorage.setItem('theme', 'light');
-            } else {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-
-        // Load saved theme
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme');
-            const sunIcon = document.getElementById('sun-icon');
-            const moonIcon = document.getElementById('moon-icon');
-
-            if (savedTheme === 'light') {
-                document.body.classList.add('light');
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-            } else {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            }
-
-            // Handle dynamic app links
+            // Handle app links
             document.querySelectorAll('.app-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const port = link.dataset.port;
+                    const path = link.dataset.path || '/';
+                    const url = `http://${window.location.hostname}:${port}${path}`;
+                    window.open(url, '_blank');
+                });
+            });
+
+            // Sidebar nav links
+            document.querySelectorAll('.sidebar-nav .app-link').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const port = link.dataset.port;
