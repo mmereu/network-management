@@ -315,34 +315,37 @@ def generate_stack_config():
     """Generate final stack configuration"""
     try:
         data = request.get_json()
-        
+
         required_fields = ['stack_name', 'new_stack_ip', 'gateway', 'admin_password']
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
-        
+
         stack_name = data['stack_name']
         new_stack_ip = data['new_stack_ip']
         gateway = data['gateway']
         admin_password = data['admin_password']
-        
+        lacp_enabled = data.get('lacp_enabled', False)
+        stack_units = data.get('stack_units', [])
+
         # Load interfaces from temp file
         import json
         stack_file = f'/tmp/huawei_stack/{stack_name}.json'
-        
+
         if not os.path.exists(stack_file):
             return jsonify({'error': 'Stack data not found. Please process stack first (Step 2)'}), 400
-        
+
         with open(stack_file, 'r') as f:
             stack_data = json.load(f)
-        
+
         interfaces = stack_data['interfaces']
-        
-        logger.info(f"Generating stack config for {stack_name}: {len(interfaces)} interfaces")
-        
+
+        logger.info(f"Generating stack config for {stack_name}: {len(interfaces)} interfaces, LACP={lacp_enabled}")
+
         generator = TemplateGenerator()
         config = generator.generate_complete_config(
-            interfaces, stack_name, new_stack_ip, gateway, admin_password
+            interfaces, stack_name, new_stack_ip, gateway, admin_password,
+            lacp_enabled=lacp_enabled, stack_units=stack_units
         )
         
         filename = f"{stack_name}_config.txt"

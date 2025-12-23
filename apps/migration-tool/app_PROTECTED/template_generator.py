@@ -13,7 +13,8 @@ class TemplateGenerator:
         self.template_dir = template_dir
         self.env = Environment(loader=FileSystemLoader(template_dir))
 
-    def generate_complete_config(self, interfaces, switch_name, switch_ip, switch_gateway, admin_password):
+    def generate_complete_config(self, interfaces, switch_name, switch_ip, switch_gateway, admin_password,
+                                   lacp_enabled=False, stack_units=None):
         """
         Generate complete switch configuration with full template
 
@@ -23,6 +24,8 @@ class TemplateGenerator:
             switch_ip: Management IP address
             switch_gateway: Default gateway IP
             admin_password: Admin user password
+            lacp_enabled: Enable LACP Eth-Trunk1 configuration
+            stack_units: List of stack unit numbers for 10GE uplinks
 
         Returns:
             String with complete configuration
@@ -35,10 +38,12 @@ class TemplateGenerator:
                 switch_ip=switch_ip,
                 switch_gateway=switch_gateway,
                 admin_password=admin_password,
-                interfaces=interfaces
+                interfaces=interfaces,
+                lacp_enabled=lacp_enabled,
+                stack_units=stack_units or []
             )
 
-            logger.info(f"Generated complete configuration for {switch_name} with {len(interfaces)} interfaces")
+            logger.info(f"Generated complete configuration for {switch_name} with {len(interfaces)} interfaces, LACP={lacp_enabled}")
             return config
 
         except Exception as e:

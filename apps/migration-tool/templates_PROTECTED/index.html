@@ -762,6 +762,13 @@
                 <input type="password" id="adminPassword" class="form-input" placeholder="Password amministratore">
             </div>
 
+            <div class="form-group" style="display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" id="lacpEnabled" style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;">
+                <label for="lacpEnabled" class="form-label" style="margin-bottom: 0; cursor: pointer;">
+                    LACP (Eth-Trunk1 con uplink 10GE per ogni unità)
+                </label>
+            </div>
+
             <button class="btn" onclick="generateFinalConfig()">
                 <span id="generateLoading" class="loading hidden"></span>
                 Genera Configurazione
@@ -946,6 +953,13 @@
             const newStackIp = document.getElementById('newStackIp').value;
             const gateway = document.getElementById('gateway').value;
             const adminPassword = document.getElementById('adminPassword').value;
+            const lacpEnabled = document.getElementById('lacpEnabled').checked;
+
+            // Estrai le unità dallo stack per LACP
+            const stackUnits = stackData.switches
+                .filter(sw => !sw.error)
+                .map(sw => sw.stack_unit)
+                .sort((a, b) => a - b);
 
             const loading = document.getElementById('generateLoading');
             loading.classList.remove('hidden');
@@ -960,7 +974,9 @@
                         stack_name: stackData.stack_name,
                         new_stack_ip: newStackIp,
                         gateway: gateway,
-                        admin_password: adminPassword
+                        admin_password: adminPassword,
+                        lacp_enabled: lacpEnabled,
+                        stack_units: stackUnits
                     })
                 });
 
