@@ -8,6 +8,8 @@ from app.universal_interface_parser import UniversalInterfaceParser
 import logging
 import io
 import os
+import re
+from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
@@ -373,4 +375,231 @@ def generate_stack_config():
         
     except Exception as e:
         logger.error(f"Stack config generation failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/layer3')
+def layer3():
+    """Layer 3 migration page"""
+    return render_template('layer3.html')
+
+
+@bp.route('/api/parse-layer3-excel', methods=['POST'])
+def parse_layer3_excel():
+    """Parse Excel file for Layer 3 migration"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'Nessun file caricato'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Nessun file selezionato'}), 400
+
+        # Read Excel with openpyxl
+        wb = load_workbook(file)
+        ws = wb.active
+
+        mappings = []
+        eth_trunks = set()
+
+        # Parse rows - skip first 2 rows (headers)
+        for row_idx, row in enumerate(ws.iter_rows(min_row=3, values_only=True), start=3):
+            # Columns: 0=empty, 1=old_port, 2=new_port, 3=description, 4=eth_trunk, 5=link_type, 6=config1, 7=config2
+            old_port = str(row[1]).strip() if row[1] else None
+            new_port = str(row[2]).strip() if row[2] else None
+            description = str(row[3]).strip() if row[3] else None
+            eth_trunk = str(row[4]).strip() if row[4] else None
+            link_type = str(row[5]).strip() if row[5] else None
+            config1 = str(row[6]).strip() if row[6] else None
+            config2 = str(row[7]).strip() if len(row) > 7 and row[7] else None
+
+            # Skip if no new port mapping
+            if not new_port or new_port == 'nan' or not new_port.startswith('interface'):
+                continue
+
+            # Extract port name from "interface XGigabitEthernet1/0/1"
+            new_port_name = new_port.replace('interface ', '').strip()
+
+            # Parse eth-trunk number
+            eth_trunk_num = None
+            if eth_trunk and eth_trunk != 'nan':
+                match = re.search(r'eth-trunk\s*(\d+)', eth_trunk, re.IGNORECASE)
+                if match:
+                    eth_trunk_num = int(match.group(1))
+                    eth_trunks.add(eth_trunk_num)
+
+            # Parse link type
+            port_link_type = None
+            if link_type and 'trunk' in link_type.lower():
+                port_link_type = 'trunk'
+            elif link_type and 'access' in link_type.lower():
+                port_link_type = 'access'
+
+            # Parse VLAN from config
+            vlan = None
+            if config1:
+                vlan_match = re.search(r'vlan\s+(\d+)', config1)
+                if vlan_match:
+                    vlan = int(vlan_match.group(1))
+
+            # Check for pvid
+            pvid = None
+            if config1 and 'pvid' in config1.lower():
+                pvid_match = re.search(r'pvid\s+vlan\s+(\d+)', config1)
+                if pvid_match:
+                    pvid = int(pvid_match.group(1))
+
+            # Check for specific trunk vlans (not 2 to 4094)
+            trunk_vlans = None
+            if config2 and 'allow-pass' in config2.lower():
+                if '2 to 4094' not in config2:
+                    # Extract specific vlans
+                    vlans_match = re.findall(r'(\d+)', config2)
+                    if vlans_match:
+                        trunk_vlans = [int(v) for v in vlans_match]
+
+            mapping = {
+                'old_port': old_port,
+                'new_port': new_port_name,
+                'description': description if description != 'nan' else None,
+                'eth_trunk': eth_trunk_num,
+                'link_type': port_link_type,
+                'vlan': vlan,
+                'pvid': pvid,
+                'trunk_vlans': trunk_vlans
+            }
+            mappings.append(mapping)
+
+        logger.info(f"Parsed {len(mappings)} port mappings, {len(eth_trunks)} eth-trunks")
+
+        return jsonify({
+            'success': True,
+            'mappings': mappings,
+            'eth_trunks': sorted(list(eth_trunks)),
+            'total_mappings': len(mappings)
+        })
+
+    except Exception as e:
+        logger.error(f"Excel parsing failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/api/generate-layer3-config', methods=['POST'])
+def generate_layer3_config():
+    """Generate S6730 configuration from Excel mappings"""
+    try:
+        data = request.get_json()
+
+        mappings = data.get('mappings', [])
+        eth_trunks = data.get('eth_trunks', [])
+        switch_name = data.get('switch_name', 'NEW_S6730')
+        switch_ip = data.get('switch_ip', '')
+        gateway = data.get('gateway', '')
+        admin_password = data.get('admin_password', '')
+
+        logger.info(f"Generating Layer3 config: {len(mappings)} interfaces, {len(eth_trunks)} eth-trunks")
+
+        config_lines = []
+
+        # Header
+        config_lines.append("# Configurazione S6730-H48X6C")
+        config_lines.append(f"# Switch: {switch_name}")
+        config_lines.append(f"# Generata automaticamente")
+        config_lines.append("#")
+        config_lines.append("")
+        config_lines.append("system-view")
+        config_lines.append("")
+
+        # Sysname
+        config_lines.append(f"sysname {switch_name}")
+        config_lines.append("")
+
+        # Management VLAN and IP
+        if switch_ip:
+            config_lines.append("vlan 1000")
+            config_lines.append(" description MGM_Switch")
+            config_lines.append("#")
+            config_lines.append("interface Vlanif1000")
+            config_lines.append(f" ip address {switch_ip} 255.255.255.0")
+            config_lines.append("#")
+
+        if gateway:
+            config_lines.append(f"ip route-static 0.0.0.0 0.0.0.0 {gateway}")
+            config_lines.append("")
+
+        # Admin user
+        if admin_password:
+            config_lines.append("aaa")
+            config_lines.append(f"local-user admin password irreversible-cipher {admin_password}")
+            config_lines.append("local-user admin privilege level 3")
+            config_lines.append("local-user admin service-type terminal ssh")
+            config_lines.append("q")
+            config_lines.append("")
+
+        # Eth-Trunks first
+        if eth_trunks:
+            config_lines.append("# Eth-Trunk Configuration")
+            for trunk_num in sorted(eth_trunks):
+                config_lines.append("#")
+                config_lines.append(f"interface Eth-Trunk{trunk_num}")
+                config_lines.append(" port link-type trunk")
+                config_lines.append(" port trunk allow-pass vlan 2 to 4094")
+                config_lines.append(" mode lacp")
+                config_lines.append(" q")
+            config_lines.append("")
+
+        # Interface configurations
+        config_lines.append("# Interface Configuration")
+
+        stats = {'interfaces': 0, 'trunk_ports': 0, 'access_ports': 0, 'eth_trunks': len(eth_trunks)}
+
+        for m in mappings:
+            config_lines.append("#")
+            config_lines.append(f"interface {m['new_port']}")
+
+            if m.get('description'):
+                desc = m['description']
+                if not desc.startswith('description'):
+                    desc = f"description {desc}"
+                config_lines.append(f" {desc}")
+
+            if m.get('eth_trunk'):
+                config_lines.append(f" eth-trunk {m['eth_trunk']}")
+            else:
+                if m.get('link_type') == 'trunk':
+                    config_lines.append(" port link-type trunk")
+                    if m.get('pvid'):
+                        config_lines.append(f" port trunk pvid vlan {m['pvid']}")
+                    if m.get('trunk_vlans'):
+                        vlans_str = ' '.join(str(v) for v in m['trunk_vlans'])
+                        config_lines.append(f" port trunk allow-pass vlan {vlans_str}")
+                    else:
+                        config_lines.append(" port trunk allow-pass vlan 2 to 4094")
+                    stats['trunk_ports'] += 1
+                elif m.get('link_type') == 'access':
+                    config_lines.append(" port link-type access")
+                    if m.get('vlan'):
+                        config_lines.append(f" port default vlan {m['vlan']}")
+                    stats['access_ports'] += 1
+
+            config_lines.append(" q")
+            stats['interfaces'] += 1
+
+        # Footer
+        config_lines.append("#")
+        config_lines.append("return")
+        config_lines.append("")
+
+        config = '\n'.join(config_lines)
+        filename = f"{switch_name}_layer3_config.txt"
+
+        return jsonify({
+            'success': True,
+            'config': config,
+            'filename': filename,
+            'stats': stats
+        })
+
+    except Exception as e:
+        logger.error(f"Layer3 config generation failed: {e}")
         return jsonify({'error': str(e)}), 500
