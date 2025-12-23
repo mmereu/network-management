@@ -86,8 +86,9 @@ class ConfigParser:
                 vlan_match = re.search(r'vlan\s+(\d+)', line)
                 if vlan_match:
                     config['vlan'] = int(vlan_match.group(1))
-                    # HP uses "port access vlan" which implies access mode
-                    if 'port access vlan' in line and not config['port_link_type']:
+                    # Both Huawei "port default vlan" and HP "port access vlan" imply access mode
+                    # Set access mode if not already set (fixes bug: missing port link-type line)
+                    if not config['port_link_type']:
                         config['port_link_type'] = 'access'
 
             # Trunk VLANs

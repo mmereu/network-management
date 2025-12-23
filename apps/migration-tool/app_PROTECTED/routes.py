@@ -226,22 +226,28 @@ def process_stack():
                 ip = sw['host']
                 password = sw['password']
                 unit = sw['unit']
+                port_count = sw.get('port_count', 48)  # Default 48 porte se non specificato
                 username = data.get('username', 'admin')
-                
-                logger.info(f"Extracting from {ip} unit {unit}")
-                
+
+                logger.info(f"Extracting from {ip} unit {unit} (max {port_count} ports)")
+
                 with SSHManager(ip, username, password) as ssh:
                     brief_output = ssh.get_interface_brief()
                     interfaces_list = ConfigParser.parse_interface_brief(brief_output)
-                    
+
                     switch_interfaces = []
                     for iface in interfaces_list:
                         parsed = UniversalInterfaceParser.parse_interface_name(iface['name'])
                         if parsed:
+                            # Filter by port_count: skip ports > max (uplink ports)
+                            if parsed['port'] > port_count:
+                                logger.info(f"Skipping uplink port {iface['name']} (port {parsed['port']} > {port_count})")
+                                continue
+
                             try:
                                 config_output = ssh.get_interface_config(iface['name'])
                                 config = ConfigParser.parse_interface_config(config_output)
-                                config = InterfaceTranslator.translate_full_config(config, unit, '48')
+                                config = InterfaceTranslator.translate_full_config(config, unit, str(port_count))
                                 
                                 switch_interfaces.append(config)
                                 all_interfaces.append(config)

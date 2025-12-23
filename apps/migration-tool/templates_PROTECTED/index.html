@@ -280,7 +280,7 @@
 
         .switch-input-group {
             display: grid;
-            grid-template-columns: 2fr 80px 2fr auto;
+            grid-template-columns: 2fr 80px 2fr 100px auto;
             gap: 12px;
             align-items: end;
             margin-bottom: 12px;
@@ -289,6 +289,32 @@
             border: 1px solid var(--border-glass);
             border-radius: 12px;
             transition: all 0.3s ease;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-glass);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(20, 25, 35, 0.8);
+            box-shadow: 0 0 0 4px var(--primary-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .switch-input-group:hover {
@@ -663,6 +689,11 @@
                     <input type="text" placeholder="IP Switch (es: 192.168.1.100)" class="form-input switch-ip">
                     <input type="number" placeholder="Unità" class="form-input switch-unit" value="1" min="1">
                     <input type="password" placeholder="Password" class="form-input switch-password">
+                    <select class="form-select switch-ports">
+                        <option value="8">8 Porte</option>
+                        <option value="24" selected>24 Porte</option>
+                        <option value="48">48 Porte</option>
+                    </select>
                     <button type="button" class="btn btn-small btn-danger" onclick="removeSwitch(this)">×</button>
                 </div>
             </div>
@@ -778,6 +809,11 @@
                 <input type="text" placeholder="IP Switch (es: 192.168.1.10${nextUnit})" class="form-input switch-ip">
                 <input type="number" placeholder="Unità" class="form-input switch-unit" value="${nextUnit}" min="1">
                 <input type="password" placeholder="Password" class="form-input switch-password">
+                <select class="form-select switch-ports">
+                    <option value="8">8 Porte</option>
+                    <option value="24" selected>24 Porte</option>
+                    <option value="48">48 Porte</option>
+                </select>
                 <button type="button" class="btn btn-small btn-danger" onclick="removeSwitch(this)">×</button>
             `;
 
@@ -808,12 +844,14 @@
                 const ip = row.querySelector('.switch-ip').value;
                 const unit = row.querySelector('.switch-unit').value;
                 const password = row.querySelector('.switch-password').value;
+                const ports = row.querySelector('.switch-ports').value;
 
                 if (ip && password) {
                     switches.push({
                         host: ip,
                         unit: parseInt(unit),
-                        password: password
+                        password: password,
+                        port_count: parseInt(ports)
                     });
                 }
             }
