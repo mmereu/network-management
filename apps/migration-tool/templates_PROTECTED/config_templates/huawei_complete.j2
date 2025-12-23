@@ -178,6 +178,12 @@ interface {{ interface.name }}
  duplex {{ interface.duplex }}
 {%- endif %}
 {% endfor %}
+{% for sw in switches_info %}
+{% if sw.port_count == 8 and not sw.error %}
+#
+interface GE{{ sw.stack_unit }}/0/9
+{% endif %}
+{% endfor %}
 {% if lacp_enabled %}
 #
 # LACP Configuration

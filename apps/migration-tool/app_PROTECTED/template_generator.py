@@ -14,7 +14,7 @@ class TemplateGenerator:
         self.env = Environment(loader=FileSystemLoader(template_dir))
 
     def generate_complete_config(self, interfaces, switch_name, switch_ip, switch_gateway, admin_password,
-                                   lacp_enabled=False, stack_units=None):
+                                   lacp_enabled=False, stack_units=None, switches_info=None):
         """
         Generate complete switch configuration with full template
 
@@ -26,6 +26,7 @@ class TemplateGenerator:
             admin_password: Admin user password
             lacp_enabled: Enable LACP Eth-Trunk1 configuration
             stack_units: List of stack unit numbers for 10GE uplinks
+            switches_info: List of switch info dicts with port_count per unit
 
         Returns:
             String with complete configuration
@@ -40,7 +41,8 @@ class TemplateGenerator:
                 admin_password=admin_password,
                 interfaces=interfaces,
                 lacp_enabled=lacp_enabled,
-                stack_units=stack_units or []
+                stack_units=stack_units or [],
+                switches_info=switches_info or []
             )
 
             logger.info(f"Generated complete configuration for {switch_name} with {len(interfaces)} interfaces, LACP={lacp_enabled}")

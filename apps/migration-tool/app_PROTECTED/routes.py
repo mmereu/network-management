@@ -265,6 +265,7 @@ def process_stack():
                     'stack_unit': unit,
                     'switch_ip': ip,
                     'ip_address': ip,
+                    'port_count': port_count,
                     'interface_count': len(switch_interfaces),
                     'vlans': list(unique_vlans),
                     'connection_method': ssh.connection_method,
@@ -277,6 +278,7 @@ def process_stack():
                     'stack_unit': sw.get('unit', 0),
                     'switch_ip': sw.get('host', 'unknown'),
                     'ip_address': sw.get('host', 'unknown'),
+                    'port_count': sw.get('port_count', 48),
                     'interface_count': 0,
                     'vlans': [],
                     'connection_method': None,
@@ -339,13 +341,14 @@ def generate_stack_config():
             stack_data = json.load(f)
 
         interfaces = stack_data['interfaces']
+        switches_info = stack_data.get('summary', {}).get('switches', [])
 
         logger.info(f"Generating stack config for {stack_name}: {len(interfaces)} interfaces, LACP={lacp_enabled}")
 
         generator = TemplateGenerator()
         config = generator.generate_complete_config(
             interfaces, stack_name, new_stack_ip, gateway, admin_password,
-            lacp_enabled=lacp_enabled, stack_units=stack_units
+            lacp_enabled=lacp_enabled, stack_units=stack_units, switches_info=switches_info
         )
         
         filename = f"{stack_name}_config.txt"
