@@ -244,6 +244,11 @@ def process_stack():
                                 logger.info(f"Skipping uplink port {iface['name']} (port {parsed['port']} > {port_count})")
                                 continue
 
+                            # For 8-port switches: GigabitEthernet is the uplink, skip it
+                            if port_count == 8 and iface['name'].lower().startswith('gigabitethernet'):
+                                logger.info(f"Skipping GigabitEthernet uplink {iface['name']} for 8-port switch")
+                                continue
+
                             try:
                                 config_output = ssh.get_interface_config(iface['name'])
                                 config = ConfigParser.parse_interface_config(config_output)
