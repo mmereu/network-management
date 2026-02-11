@@ -1,0 +1,250 @@
+install feature-software WEAKEA
+System-view
+vlan 1000
+#
+interface Vlanif1000
+ ip address {{ switch_ip }} 255.255.255.0
+#
+ip route-static 0.0.0.0 0.0.0.0 {{ switch_gateway }}
+
+Sysname {{ switch_name }}
+
+Aaa
+local-aaa-user password policy administrator
+undo password alert original
+Q
+local-aaa-user user-name complexity-check disable
+local-user admin password irreversible-cipher {{ admin_password }}
+local-user admin password-force-change disable
+local-user admin privilege level 3
+Y
+local-user admin service-type terminal ssh ftp http
+Q
+#
+#
+vlan 2
+ description Uffici_New
+ name Uffici_New
+#
+vlan 3
+ description Casse
+ name Casse
+#
+vlan 7
+ description Vynamic
+ name H2O
+#
+vlan 8
+ description Manutenzione
+ name Manutenzione
+#
+vlan 9
+ description Bilance
+ name Bilance
+#
+vlan 10
+ description RISTORAZIONE
+ name RISTORAZIONE
+#
+vlan 11
+ description Ufficio
+ name Ufficio
+#
+vlan 12
+ description Catalina
+ name Catalina
+#
+vlan 13
+ description Datalogic_AP
+ name Datalogic_AP
+#
+vlan 14
+ description Datalogic_Shopv6
+ name Datalogic_Shopv6
+#
+vlan 16
+ description Internet_subnet_29
+ name INTERNET_2
+#
+vlan 18
+ description Tokheim
+ name Tokheim
+#
+vlan 31
+ description Unieuro
+ name Unieuro
+#
+vlan 33
+ description Voip
+ name Voip
+#
+vlan 40
+ description CI-SERVER
+ name CI-SERVER
+#
+vlan 60
+ description Parafarmacia
+#
+vlan 71
+ description Avigilon
+ name Avigilon
+#
+vlan 77
+ description Catalina_Cross
+ name Catalina_Cross
+#
+vlan 99
+ description temp
+ name temp
+#
+vlan 100
+ description LOTTOMATICA
+ name LOTTOMATICA
+#
+vlan 212
+ description MPLS Vodafone
+ name MPLS_VODAFONE
+#
+vlan 214
+ description Lan Ponti Radio
+#
+vlan 216
+ description VODAFONE
+#
+vlan 233
+ description New_Voip
+#
+vlan 244
+ description WIFI_GOLD6
+ name WIFI_GOLD6
+#
+vlan 245
+ description WIFI_GOLD6_TRA
+ name WIFI_GOLD6_TRA
+#
+vlan 249
+ description WIFI_CORPORATE
+ name WIFI_CORPORATE
+#
+vlan 251
+ description WIFI_GROUP
+ name WIFI_GROUP
+#
+vlan 253
+ description hotspot_p2p
+ name hotspot_p2p
+#
+vlan 254
+ description Hotspot_client
+ name Hotspot_client
+#
+vlan 666
+ description ADSL Parafarmacia
+#
+vlan 998
+ description Checkpoint_10.124
+#
+vlan 1000
+ description MGM_Switch
+#
+vlan 1001
+ description AP_MNG
+ name AP_MNG
+
+# Interface Configuration
+{% for interface in interfaces -%}
+#
+interface {{ interface.name }}
+{%- if interface.description %}
+ description {{ interface.description }}
+{%- endif %}
+{%- if interface.port_link_type %}
+ port link-type {{ interface.port_link_type }}
+{%- endif %}
+{%- if interface.port_link_type == 'access' and interface.vlan %}
+ port default vlan {{ interface.vlan }}
+{%- endif %}
+{%- if interface.port_link_type == 'trunk' and interface.trunk_vlans %}
+{%- if interface.trunk_vlans|length > 100 or (interface.trunk_vlans|length == 2 and interface.trunk_vlans[0] == 2 and interface.trunk_vlans[-1] >= 4094) %}
+ port trunk allow-pass vlan 2 to 4094
+{%- else %}
+ port trunk allow-pass vlan {{ interface.trunk_vlans|join(' ') }}
+{%- endif %}
+{%- endif %}
+{%- if interface.speed %}
+ speed {{ interface.speed }}
+{%- endif %}
+{%- if interface.duplex %}
+ duplex {{ interface.duplex }}
+{%- endif %}
+{% endfor %}
+{% for sw in switches_info %}
+{% if sw.port_count == 8 and not sw.error %}
+#
+interface GE{{ sw.stack_unit }}/0/9
+{% endif %}
+{% endfor %}
+{% if lacp_enabled %}
+#
+# LACP Configuration
+#
+interface Eth-Trunk1
+ port link-type trunk
+ port trunk allow-pass vlan 2 to 4094
+ mode lacp-static
+ q
+{% for unit in stack_units %}
+#
+interface 10GE{{ unit }}/0/1
+ eth-trunk 1
+ q
+{% endfor %}
+{% endif %}
+#
+stelnet server enable
+sftp server enable
+ssh server-source all-interface
+Y
+ssh authorization-type default aaa
+
+user-interface vty 0 4
+authentication-mode aaa
+Q
+
+http
+web-manager enable port 443
+web-manager http forward enable
+web-manager warning-banner enable
+web-manager server-source all-interface
+Y
+
+sftp server default-directory flash:/
+ssh client first-time enable
+
+info-center source default channel 3 log level warning
+info-center loghost {{ loghost | default('CHANGE_ME') }}
+
+dns resolve
+dns server {{ dns_server | default('CHANGE_ME') }}
+dns domain {{ dns_domain | default('example.com') }}
+
+clock timezone ROME add 01:00:00
+clock daylight-saving-time SUMMER repeating 02:00 last Sun Mar 03:00 last Sun Oct 01:00
+ntp server disable
+Y
+ntp ipv6 server disable
+Y
+ntp server source-interface all enable
+Y
+ntp ipv6 server source-interface all disable
+ntp unicast-server {{ ntp_server | default('CHANGE_ME') }}
+
+snmp-agent sys-info version v2c
+snmp-agent community complexity-check disable
+snmp-agent community read cipher {{ snmp_community | default('CHANGE_ME') }}
+snmp-agent protocol source-status all-interface
+snmp-agent mib-view included iso-view iso
+snmp-agent mib-view included lldp-view iso
+snmp-agent community read {{ snmp_community | default('CHANGE_ME') }} mib-view lldp-view
+#
+return

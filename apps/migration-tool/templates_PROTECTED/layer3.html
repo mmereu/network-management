@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrazione Layer 3 - S7703 to S6730</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: rgba(26, 31, 46, 0.7);
+            --bg-card-hover: rgba(30, 36, 54, 0.8);
+            --bg-input: rgba(15, 20, 25, 0.6);
+            --primary: #6366f1;
+            --primary-hover: #818cf8;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #22d3ee;
+            --success: #10b981;
+            --success-hover: #34d399;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-glass: rgba(148, 163, 184, 0.1);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-primary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.3s ease;
+            margin-top: 12px;
+        }
+
+        .nav-link:hover { color: var(--text-primary); }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-glass);
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .upload-zone.has-file {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-zone p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .upload-zone .filename {
+            color: var(--success);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-glass);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--primary-glow);
+        }
+
+        .btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .hidden { display: none !important; }
+
+        .results {
+            background: rgba(15, 20, 25, 0.5);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .results h3 {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .config-preview {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .mapping-table th, .mapping-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .mapping-table th {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .mapping-table td {
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-trunk {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .badge-access {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .badge-lacp {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Migrazione Layer 3</h1>
+            <p>S7703 Quidway → S6730-H48X6C</p>
+            <a href="/" class="nav-link">← Torna alla Dashboard</a>
+        </div>
+
+        <!-- Step 1: Upload Excel -->
+        <div class="card" id="uploadCard">
+            <h2>1. Carica File Excel</h2>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📊</div>
+                <p>Trascina il file Excel qui oppure clicca per selezionare</p>
+                <p style="font-size: 12px; color: var(--text-muted);">Formato: .xlsx con mappatura porte</p>
+                <p class="filename hidden" id="fileName"></p>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+        </div>
+
+        <!-- Step 2: Configurazione -->
+        <div class="card hidden" id="configCard">
+            <h2>2. Parametri Configurazione</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Nome Switch</label>
+                    <input type="text" id="switchName" class="form-input" placeholder="es: ORIO_L3_NUOVO">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IP Management</label>
+                    <input type="text" id="switchIp" class="form-input" placeholder="es: 10.29.4.1">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Gateway</label>
+                    <input type="text" id="gateway" class="form-input" placeholder="es: 10.29.4.254">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password Admin</label>
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Password">
+                </div>
+            </div>
+
+            <h3 style="margin: 24px 0 16px; color: var(--text-secondary);">Anteprima Mappatura</h3>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table class="mapping-table" id="mappingTable">
+                    <thead>
+                        <tr>
+                            <th>Porta Vecchia</th>
+                            <th>Porta Nuova</th>
+                            <th>Descrizione</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mappingBody"></tbody>
+                </table>
+            </div>
+
+            <button class="btn" onclick="generateConfig()" style="margin-top: 24px;">
+                <span id="generateLoading" class="loading hidden"></span>
+                Genera Configurazione
+            </button>
+        </div>
+
+        <!-- Step 3: Risultati -->
+        <div class="card hidden" id="resultsCard">
+            <h2>3. Configurazione Generata</h2>
+            <div class="results">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Interfacce</div>
+                        <div class="stat-value" id="statInterfaces">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Eth-Trunk</div>
+                        <div class="stat-value" id="statTrunks">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Trunk Ports</div>
+                        <div class="stat-value" id="statTrunkPorts">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Access Ports</div>
+                        <div class="stat-value" id="statAccessPorts">0</div>
+                    </div>
+                </div>
+
+                <h3>Anteprima</h3>
+                <div class="config-preview" id="configPreview"></div>
+
+                <button class="btn btn-success" onclick="downloadConfig()">
+                    Scarica Configurazione
+                </button>
+            </div>
+        </div>
+
+        <div id="messageContainer"></div>
+    </div>
+
+    <script>
+        let excelData = null;
+        let generatedConfig = null;
+        let configFilename = null;
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) processFile(file);
+        }
+
+        async function processFile(file) {
+            if (!file.name.match(/\.xlsx?$/i)) {
+                showMessage('Seleziona un file Excel (.xlsx)', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/parse-layer3-excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    excelData = data;
+
+                    // Update UI
+                    document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('fileName').classList.remove('hidden');
+                    uploadZone.classList.add('has-file');
+                    uploadZone.querySelector('.upload-icon').textContent = '✅';
+
+                    // Show mapping preview
+                    showMappingPreview(data.mappings);
+                    document.getElementById('configCard').classList.remove('hidden');
+
+                    showMessage(`File caricato: ${data.total_mappings} porte mappate, ${data.eth_trunks.length} eth-trunk`, 'success');
+                } else {
+                    showMessage(data.error || 'Errore nel parsing del file', 'error');
+                }
+            } catch (error) {
+                showMessage('Errore: ' + error.message, 'error');
+            }
+        }
+
+        function showMappingPreview(mappings) {
+            const tbody = document.getElementById('mappingBody');
+            tbody.innerHTML = '';
+
+            mappings.forEach(m => {
+                let badge = '';
+                if (m.eth_trunk) {
+                    badge = `<span class="badge badge-lacp">ETH-TRUNK ${m.eth_trunk}</span>`;
+                } else if (m.link_type === 'trunk') {
+                    badge = '<span class="badge badge-trunk">TRUNK</span>';
+                } else if (m.link_type === 'access') {
+                    badge = '<span class="badge badge-access">ACCESS</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${m.old_port}</td>
+                        <td>${m.new_port}</td>
+                        <td>${m.description || '-'}</td>
+                        <td>${badge}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function generateConfig() {
+            if (!excelData) {
+                showMessage('Carica prima un file Excel', 'error');
+                return;
+            }
+
+            const switchName = document.getElementById('switchName').value || 'NEW_S6730';
+            const switchIp = document.getElementById('switchIp').value;
+            const gateway = document.getElementById('gateway').value;
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            const loading = document.getElementById('generateLoading');
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/generate-layer3-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mappings: excelData.mappings,
+                        eth_trunks: excelData.eth_trunks,
+                        switch_name: switchName,
+                        switch_ip: switchIp,
+                        gateway: gateway,
+                        admin_password: adminPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    generatedConfig = data.config;
+                    configFilename = data.filename;
+
+                    // Update stats
+                    document.getElementById('statInterfaces').textContent = data.stats.interfaces;
+                    document.getElementById('statTrunks').textContent = data.stats.eth_trunks;
+                    document.getElementById('statTrunkPorts').textContent = data.stats.trunk_ports;
+                    document.getElementById('statAccessPorts').textContent = data.stats.access_ports;
+
+                    // Show preview
+                    document.getElementById('configPreview').textContent = generatedConfig;
+                    document.getElementById('resultsCard').classList.remove('hidden');
+
+                    showMessage('Configurazione generata con successo!', 'success');
+                } else {
+                    showMessage(data.error || 'Errore nella generazione', 'error');
+                }
+            } catch (error) {
+                showMessage('Errore: ' + error.message, 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function downloadConfig() {
+            if (!generatedConfig) return;
+
+            const blob = new Blob([generatedConfig], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = configFilename || 'layer3_config.txt';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+    </script>
+</body>
+</html>

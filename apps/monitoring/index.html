@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Management - Enterprise Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-main: #0f1535;
+            --bg-card: linear-gradient(127.09deg, rgba(6, 11, 40, 0.94) 19.41%, rgba(10, 14, 35, 0.49) 76.65%);
+            --bg-sidebar: linear-gradient(127.09deg, rgba(6, 11, 40, 0.94) 19.41%, rgba(10, 14, 35, 0.49) 76.65%);
+            --border-gradient: linear-gradient(135deg, rgba(0, 117, 255, 0.5) 0%, rgba(0, 242, 254, 0.2) 100%);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --accent-blue: #0075ff;
+            --accent-cyan: #00f2fe;
+            --accent-gradient: linear-gradient(135deg, #0075ff 0%, #00f2fe 100%);
+            --accent-purple: #7928ca;
+            --accent-pink: #ff0080;
+            --success: #01b574;
+            --warning: #ffb547;
+            --danger: #e31a1a;
+            --glow-blue: 0 0 30px rgba(0, 117, 255, 0.4);
+            --glow-cyan: 0 0 30px rgba(0, 242, 254, 0.3);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            min-height: 100vh;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(120px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 24px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--glow-blue);
+        }
+
+        .brand-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text span {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: var(--glow-blue);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: white;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .nav-item.active .nav-icon {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-left .breadcrumb {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .header-left .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 240px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px 24px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0, 117, 255, 0.3), transparent 50%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .stat-card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-info h3 {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-info .value {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-info .change {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 4px;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--accent-gradient);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--glow-blue);
+        }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: var(--border-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .welcome-content h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .welcome-content h2 span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        .welcome-image {
+            width: 200px;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(0, 117, 255, 0.2), rgba(0, 242, 254, 0.1));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+        }
+
+        /* Apps Section */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--card-accent, rgba(0, 117, 255, 0.4)), transparent 60%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), var(--glow-blue);
+        }
+
+        .app-card:hover::before {
+            opacity: 1;
+        }
+
+        .app-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .app-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--icon-gradient, var(--accent-gradient));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+        }
+
+        .app-card:hover .app-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .app-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(1, 181, 116, 0.15);
+            border: 1px solid rgba(1, 181, 116, 0.3);
+            border-radius: 8px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .app-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .app-card:hover h3 {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .app-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .app-meta {
+            display: flex;
+            gap: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .meta-item span {
+            color: var(--text-muted);
+        }
+
+        .meta-item code {
+            color: var(--accent-cyan);
+            font-family: 'SF Mono', monospace;
+            font-weight: 500;
+        }
+
+        .app-button {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 16px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .app-card:hover .app-button {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .app-button:hover {
+            box-shadow: var(--glow-blue);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 48px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+            .welcome-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .welcome-image {
+                margin-top: 24px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                Network Management
+                <span>Enterprise</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="#" class="nav-item active">
+                    <div class="nav-icon">📊</div>
+                    Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Applications</div>
+                <a href="#" data-port="9999" class="nav-item app-link">
+                    <div class="nav-icon">🔄</div>
+                    Config Switch Stack
+                </a>
+                <a href="#" data-port="8443" data-path="/config-switch" class="nav-item app-link">
+                    <div class="nav-icon">🔧</div>
+                    Configurazione Switch
+                </a>
+                <a href="#" data-port="5002" class="nav-item app-link">
+                    <div class="nav-icon">🗺️</div>
+                    Visualizza Porte
+                </a>
+                <a href="/discovery.html" class="nav-item">
+                    <div class="nav-icon">🔍</div>
+                    Network Discovery
+                </a>
+                <a href="#" data-port="8443" class="nav-item app-link">
+                    <div class="nav-icon">💻</div>
+                    SSH Terminal
+                </a>
+                <a href="#" data-port="5003" class="nav-item app-link">
+                    <div class="nav-icon">💾</div>
+                    Config Backup
+                </a>
+                <a href="#" data-port="9999" data-path="/layer3" class="nav-item app-link">
+                    <div class="nav-icon">🔀</div>
+                    Migrazione Layer 3
+                </a>
+                <a href="#" data-port="4000" data-path="/mac-tracker.html" class="nav-item app-link">
+                    <div class="nav-icon">📍</div>
+                    MAC Tracker
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="breadcrumb">
+                    <a href="#">Pages</a> / Dashboard
+                </div>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <button class="header-btn" onclick="toggleTheme()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                <button class="header-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+            <div class="welcome-content">
+                <h2>Bentornato, <span>Admin</span></h2>
+                <p>Monitora e gestisci la tua infrastruttura di rete da questa dashboard centralizzata. Tutti i sistemi sono operativi e funzionano correttamente.</p>
+            </div>
+            <div class="welcome-image">🌐</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Applicazioni Totali</h3>
+                        <div class="value">8</div>
+                        <div class="change">Tutte Attive</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2"/>
+                            <rect x="2" y="14" width="20" height="8" rx="2"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Servizi Attivi</h3>
+                        <div class="value">8</div>
+                        <div class="change">100% Uptime</div>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #01b574, #00d4aa);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Stato Rete</h3>
+                        <div class="value" style="background: linear-gradient(135deg, #01b574, #00d4aa); -webkit-background-clip: text; background-clip: text;">Operativa</div>
+                        <div class="change">Nessun Problema</div>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #7928ca, #ff0080);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-content">
+                    <div class="stat-info">
+                        <h3>Server IP</h3>
+                        <div class="value" style="font-size: 20px;" id="server-ip">--</div>
+                        <div class="change">API: 5001</div>
+                    </div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ffb547, #ff7847);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="20" rx="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications Section -->
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Applicazioni</h2>
+                <p class="section-subtitle">Clicca su una card per aprire l'applicazione</p>
+            </div>
+        </div>
+
+        <div class="apps-grid">
+            <!-- Config Switch Stack -->
+            <a href="#" data-port="9999" class="app-card app-link" style="--card-accent: rgba(59, 130, 246, 0.5); --icon-gradient: linear-gradient(135deg, #3b82f6, #06b6d4);">
+                <div class="app-card-header">
+                    <div class="app-icon">🔄</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>Configurazione Switch Stack</h3>
+                <p>Migrazione e configurazione switch stack HP/Huawei con trasferimento automatico.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>9999</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- Configurazione Switch -->
+            <a href="#" data-port="8443" data-path="/config-switch" class="app-card app-link" style="--card-accent: rgba(168, 85, 247, 0.5); --icon-gradient: linear-gradient(135deg, #a855f7, #ec4899);">
+                <div class="app-card-header">
+                    <div class="app-icon">🔧</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>Configurazione Switch</h3>
+                <p>Interfaccia moderna per la gestione configurazioni switch in tempo reale.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>8443</code>
+                    </div>
+                    <div class="meta-item">
+                        <span>Path:</span>
+                        <code>/config-switch</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- Visualizza Porte Switch -->
+            <a href="#" data-port="5002" class="app-card app-link" style="--card-accent: rgba(16, 185, 129, 0.5); --icon-gradient: linear-gradient(135deg, #10b981, #34d399);">
+                <div class="app-card-header">
+                    <div class="app-icon">🗺️</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>Visualizza Porte Switch</h3>
+                <p>Mappatura porte di rete e gestione VLAN con visualizzazione topologia.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>5002</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- Network Discovery -->
+            <a href="/discovery.html" class="app-card" style="--card-accent: rgba(99, 102, 241, 0.5); --icon-gradient: linear-gradient(135deg, #6366f1, #3b82f6);">
+                <div class="app-card-header">
+                    <div class="app-icon">🔍</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>Network Discovery</h3>
+                <p>Scoperta automatica dispositivi SNMP e scansione rete con inventario.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Protocol:</span>
+                        <code>SNMP</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- SSH Terminal -->
+            <a href="#" data-port="8443" class="app-card app-link" style="--card-accent: rgba(139, 92, 246, 0.5); --icon-gradient: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                <div class="app-card-header">
+                    <div class="app-icon">💻</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>SSH Terminal</h3>
+                <p>Terminale SSH web-based per gestione remota dispositivi di rete.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>8443</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- Config Backup -->
+            <a href="#" data-port="5003" class="app-card app-link" style="--card-accent: rgba(249, 115, 22, 0.5); --icon-gradient: linear-gradient(135deg, #f97316, #eab308);">
+                <div class="app-card-header">
+                    <div class="app-icon">💾</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>Config Backup</h3>
+                <p>Backup automatico configurazioni con confronto visuale diff e cronologia.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>5003</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- MAC Tracker -->
+            <a href="#" data-port="4000" data-path="/mac-tracker.html" class="app-card app-link" style="--card-accent: rgba(20, 184, 166, 0.5); --icon-gradient: linear-gradient(135deg, #14b8a6, #06b6d4);">
+                <div class="app-card-header">
+                    <div class="app-icon">📍</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>MAC Tracker</h3>
+                <p>Traccia e localizza indirizzi MAC nella tua infrastruttura di rete.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>4000</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+
+            <!-- Migrazione Layer 3 -->
+            <a href="#" data-port="9999" data-path="/layer3" class="app-card app-link" style="--card-accent: rgba(236, 72, 153, 0.5); --icon-gradient: linear-gradient(135deg, #ec4899, #f43f5e);">
+                <div class="app-card-header">
+                    <div class="app-icon">🔀</div>
+                    <div class="app-status">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Active</span>
+                    </div>
+                </div>
+                <h3>Migrazione Layer 3</h3>
+                <p>Migrazione automatica da S7703 a S6730-H48X6C con Excel.</p>
+                <div class="app-meta">
+                    <div class="meta-item">
+                        <span>Port:</span>
+                        <code>9999</code>
+                    </div>
+                    <div class="meta-item">
+                        <span>Path:</span>
+                        <code>/layer3</code>
+                    </div>
+                </div>
+                <button class="app-button">Apri Applicazione</button>
+            </a>
+        </div>
+
+        <footer class="footer">
+            <p>Network Management Dashboard &copy; 2025 | Stile Vision UI</p>
+        </footer>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Handle app links
+            document.querySelectorAll('.app-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const port = link.dataset.port;
+                    const path = link.dataset.path || '/';
+                    const url = `http://${window.location.hostname}:${port}${path}`;
+                    window.open(url, '_blank');
+                });
+            });
+
+            // Sidebar nav links
+            document.querySelectorAll('.sidebar-nav .app-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const port = link.dataset.port;
+                    const path = link.dataset.path || '/';
+                    const url = `http://${window.location.hostname}:${port}${path}`;
+                    window.open(url, '_blank');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

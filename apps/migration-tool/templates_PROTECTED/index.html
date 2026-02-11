@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Stack - Huawei Migration Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Dark Theme - Coerente con Dashboard */
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: rgba(26, 31, 46, 0.7);
+            --bg-card-hover: rgba(30, 36, 54, 0.8);
+            --bg-input: rgba(15, 20, 25, 0.6);
+
+            /* Accent Colors */
+            --primary: #6366f1;
+            --primary-hover: #818cf8;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #22d3ee;
+            --success: #10b981;
+            --success-hover: #34d399;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --danger-hover: #f87171;
+
+            /* Text Colors */
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            /* Borders & Glass */
+            --border-glass: rgba(148, 163, 184, 0.1);
+            --border-active: rgba(99, 102, 241, 0.5);
+
+            /* Fonts */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-primary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        /* Stepper Container */
+        .stepper-container {
+            margin-bottom: 40px;
+        }
+
+        .stepper-progress {
+            height: 4px;
+            background: var(--border-glass);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        .stepper-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px var(--primary-glow);
+            width: 33%;
+        }
+
+        .stepper-progress-fill.step2 { width: 66%; }
+        .stepper-progress-fill.step3 { width: 100%; }
+
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 0 24px var(--primary-glow), 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+            margin-bottom: 4px;
+        }
+
+        .step.active .step-title {
+            color: var(--text-primary);
+        }
+
+        .step.completed .step-title {
+            color: var(--success);
+        }
+
+        .step-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .step-connector {
+            position: absolute;
+            top: 24px;
+            left: calc(50% + 30px);
+            right: calc(-50% + 30px);
+            height: 2px;
+            background: var(--border-glass);
+        }
+
+        .step:last-child .step-connector {
+            display: none;
+        }
+
+        .step.completed .step-connector {
+            background: var(--success);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.03);
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 24px 0 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-glass);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(20, 25, 35, 0.8);
+            box-shadow: 0 0 0 4px var(--primary-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .switch-input-group {
+            display: grid;
+            grid-template-columns: 2fr 80px 2fr 100px auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 12px;
+            padding: 16px;
+            background: rgba(15, 20, 25, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-glass);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(20, 25, 35, 0.8);
+            box-shadow: 0 0 0 4px var(--primary-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .switch-input-group:hover {
+            background: rgba(20, 25, 35, 0.5);
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            position: relative;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--primary-glow), 0 0 16px var(--primary-glow);
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-small {
+            padding: 10px 18px;
+            font-size: 14px;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            padding: 10px 14px;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(8px);
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .message.info {
+            background: rgba(34, 211, 238, 0.15);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            color: var(--secondary);
+        }
+
+        /* Results Section */
+        .results {
+            background: rgba(15, 20, 25, 0.5);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .results h3 {
+            margin-top: 0;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .result-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(148, 163, 184, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Config Preview */
+        .config-preview {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .config-preview::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .config-preview::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .config-preview::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+
+        .config-preview::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Switch List */
+        .switch-list {
+            margin-top: 16px;
+        }
+
+        .switch-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .switch-item:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+
+        .switch-item strong {
+            color: var(--text-primary);
+        }
+
+        .switch-item small {
+            color: var(--text-muted);
+        }
+
+        /* Badges */
+        .badge-ssh {
+            background: var(--success);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-telnet {
+            background: var(--warning);
+            color: #1a1f2e;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-error {
+            background: var(--danger);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-icon {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .stepper {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .step-connector {
+                display: none;
+            }
+
+            .switch-input-group {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .card {
+                padding: 24px;
+            }
+
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gestione Stack Switch</h1>
+            <a href="/" class="nav-link">← Torna alla Dashboard</a>
+        </div>
+
+        <!-- Stepper -->
+        <div class="stepper-container">
+            <div class="stepper-progress">
+                <div class="stepper-progress-fill" id="progressFill"></div>
+            </div>
+            <div class="stepper">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Configura Switch</div>
+                    <div class="step-subtitle">Inserisci credenziali</div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Analizza Stack</div>
+                    <div class="step-subtitle">Verifica interfacce</div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Genera Config</div>
+                    <div class="step-subtitle">Scarica risultati</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 1: Configurazione Switch -->
+        <div id="step1Content" class="card">
+            <h2>Configurazione Switch Stack</h2>
+            <div class="form-group">
+                <label for="stackName" class="form-label">Nome Stack</label>
+                <input type="text" id="stackName" class="form-input" placeholder="es: HuaweiStack_Sede1" value="HuaweiStack">
+            </div>
+
+            <h3>Switch nello Stack</h3>
+            <div id="switchInputs">
+                <div class="switch-input-group">
+                    <input type="text" placeholder="IP Switch (es: 192.168.1.100)" class="form-input switch-ip">
+                    <input type="number" placeholder="Unità" class="form-input switch-unit" value="1" min="1">
+                    <input type="password" placeholder="Password" class="form-input switch-password">
+                    <select class="form-select switch-ports">
+                        <option value="8">8 Porte</option>
+                        <option value="24" selected>24 Porte</option>
+                        <option value="48">48 Porte</option>
+                    </select>
+                    <button type="button" class="btn btn-small btn-danger" onclick="removeSwitch(this)">×</button>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <button type="button" class="btn btn-small" onclick="addSwitch()">+ Aggiungi Switch</button>
+            </div>
+
+            <button class="btn" onclick="processStack()">
+                <span id="processLoading" class="loading hidden"></span>
+                Analizza Stack
+            </button>
+        </div>
+
+        <!-- STEP 2: Analisi Stack -->
+        <div id="step2Content" class="card hidden">
+            <h2>Analisi Stack Completata</h2>
+            <div class="results">
+                <h3>Riepilogo Stack</h3>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-label">Nome Stack</div>
+                        <div class="result-value" id="stackNameResult">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Switch</div>
+                        <div class="result-value" id="switchCount">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Interfacce</div>
+                        <div class="result-value" id="totalInterfaces">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">VLAN</div>
+                        <div class="result-value" id="uniqueVlans">-</div>
+                    </div>
+                </div>
+
+                <h3>Switch nello Stack</h3>
+                <div id="stackSwitches" class="switch-list"></div>
+
+                <div style="margin-top: 24px;">
+                    <button class="btn btn-success" onclick="proceedToStep3()">
+                        Procedi alla Generazione
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Generazione Configurazione -->
+        <div id="step3Content" class="card hidden">
+            <h2>Generazione Configurazione Finale</h2>
+
+            <div class="form-group">
+                <label for="newStackIp" class="form-label">IP Nuovo Stack</label>
+                <input type="text" id="newStackIp" class="form-input" placeholder="192.168.1.200">
+            </div>
+
+            <div class="form-group">
+                <label for="gateway" class="form-label">Gateway</label>
+                <input type="text" id="gateway" class="form-input" placeholder="192.168.1.1">
+            </div>
+
+            <div class="form-group">
+                <label for="adminPassword" class="form-label">Password Admin</label>
+                <input type="password" id="adminPassword" class="form-input" placeholder="Password amministratore">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" id="lacpEnabled" style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;">
+                <label for="lacpEnabled" class="form-label" style="margin-bottom: 0; cursor: pointer;">
+                    LACP (Eth-Trunk1 con uplink 10GE per ogni unità)
+                </label>
+            </div>
+
+            <button class="btn" onclick="generateFinalConfig()">
+                <span id="generateLoading" class="loading hidden"></span>
+                Genera Configurazione
+            </button>
+        </div>
+
+        <!-- Risultati Configurazione Finale -->
+        <div id="finalConfigResults" class="card hidden">
+            <h2>Configurazione Generata</h2>
+            <div class="results">
+                <h3>File Generato</h3>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-label">Nome File</div>
+                        <div class="result-value" id="configFileName">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Dimensione</div>
+                        <div class="result-value" id="configSize">-</div>
+                    </div>
+                </div>
+
+                <h3>Anteprima Configurazione</h3>
+                <div class="config-preview" id="configContent"></div>
+
+                <button class="btn" onclick="downloadConfig()">Scarica Configurazione</button>
+            </div>
+        </div>
+
+        <div id="messageContainer"></div>
+    </div>
+
+    <script>
+        let stackData = null;
+        let currentStep = 1;
+
+        function addSwitch() {
+            const container = document.getElementById('switchInputs');
+            const currentUnits = container.querySelectorAll('.switch-unit');
+            const nextUnit = currentUnits.length + 1;
+
+            const newRow = document.createElement('div');
+            newRow.className = 'switch-input-group';
+            newRow.innerHTML = `
+                <input type="text" placeholder="IP Switch (es: 192.168.1.10${nextUnit})" class="form-input switch-ip">
+                <input type="number" placeholder="Unità" class="form-input switch-unit" value="${nextUnit}" min="1">
+                <input type="password" placeholder="Password" class="form-input switch-password">
+                <select class="form-select switch-ports">
+                    <option value="8">8 Porte</option>
+                    <option value="24" selected>24 Porte</option>
+                    <option value="48">48 Porte</option>
+                </select>
+                <button type="button" class="btn btn-small btn-danger" onclick="removeSwitch(this)">×</button>
+            `;
+
+            container.appendChild(newRow);
+        }
+
+        function removeSwitch(button) {
+            const container = document.getElementById('switchInputs');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+
+                // Ricalcola numeri unità
+                const units = container.querySelectorAll('.switch-unit');
+                units.forEach((input, index) => {
+                    input.value = index + 1;
+                });
+            }
+        }
+
+        async function processStack() {
+            const stackName = document.getElementById('stackName').value;
+            const switchInputs = document.getElementById('switchInputs');
+            const switches = [];
+
+            // Raccoglie dati switch
+            const rows = switchInputs.querySelectorAll('.switch-input-group');
+            for (let row of rows) {
+                const ip = row.querySelector('.switch-ip').value;
+                const unit = row.querySelector('.switch-unit').value;
+                const password = row.querySelector('.switch-password').value;
+                const ports = row.querySelector('.switch-ports').value;
+
+                if (ip && password) {
+                    switches.push({
+                        host: ip,
+                        unit: parseInt(unit),
+                        password: password,
+                        port_count: parseInt(ports)
+                    });
+                }
+            }
+
+            if (switches.length === 0) {
+                showMessage('Inserire almeno uno switch con IP e password', 'error');
+                return;
+            }
+
+            const loading = document.getElementById('processLoading');
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/process-stack', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        stack_name: stackName,
+                        switches: switches
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    stackData = data.stack_summary;
+                    showMessage(data.message, 'success');
+                    showStep2Results(data.stack_summary);
+                    moveToStep(2);
+                } else {
+                    showMessage(data.error || data.message, 'error');
+                }
+
+            } catch (error) {
+                showMessage('Errore processamento stack: ' + error.message, 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function showStep2Results(summary) {
+            document.getElementById('stackNameResult').textContent = summary.stack_name;
+            document.getElementById('switchCount').textContent = summary.switch_count;
+            document.getElementById('totalInterfaces').textContent = summary.total_interfaces;
+            document.getElementById('uniqueVlans').textContent = summary.vlans.length;
+
+            // Mostra switch dello stack
+            const switchesContainer = document.getElementById('stackSwitches');
+            let switchesHtml = '';
+
+            summary.switches.forEach(sw => {
+                let methodBadge = '';
+                let statusIcon = '';
+
+                if (sw.error) {
+                    methodBadge = '<span class="badge-error">Errore</span>';
+                    statusIcon = '<span class="status-icon">✗</span>';
+                } else if (sw.connection_method === 'Telnet') {
+                    methodBadge = '<span class="badge-telnet">Telnet</span>';
+                    statusIcon = '<span class="status-icon" style="color: var(--success)">✓</span>';
+                } else {
+                    methodBadge = '<span class="badge-ssh">SSH</span>';
+                    statusIcon = '<span class="status-icon" style="color: var(--success)">✓</span>';
+                }
+
+                switchesHtml += `
+                    <div class="switch-item">
+                        <div>
+                            <strong>Unità ${sw.stack_unit}</strong> - ${sw.switch_ip || sw.ip_address} ${methodBadge}<br>
+                            <small>${sw.interface_count} interfacce, ${sw.vlans ? sw.vlans.length : 0} VLAN</small>
+                        </div>
+                        <div>${statusIcon}</div>
+                    </div>
+                `;
+            });
+
+            switchesContainer.innerHTML = switchesHtml;
+        }
+
+        function proceedToStep3() {
+            moveToStep(3);
+        }
+
+        async function generateFinalConfig() {
+            if (!stackData) {
+                showMessage('Nessun dato stack disponibile', 'error');
+                return;
+            }
+
+            const newStackIp = document.getElementById('newStackIp').value;
+            const gateway = document.getElementById('gateway').value;
+            const adminPassword = document.getElementById('adminPassword').value;
+            const lacpEnabled = document.getElementById('lacpEnabled').checked;
+
+            // Estrai le unità dallo stack per LACP
+            const stackUnits = stackData.switches
+                .filter(sw => !sw.error)
+                .map(sw => sw.stack_unit)
+                .sort((a, b) => a - b);
+
+            const loading = document.getElementById('generateLoading');
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/generate-stack-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        stack_name: stackData.stack_name,
+                        new_stack_ip: newStackIp,
+                        gateway: gateway,
+                        admin_password: adminPassword,
+                        lacp_enabled: lacpEnabled,
+                        stack_units: stackUnits
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    showFinalResults(data);
+                    document.getElementById('finalConfigResults').classList.remove('hidden');
+                } else {
+                    showMessage(data.error || data.message, 'error');
+                }
+
+            } catch (error) {
+                showMessage('Errore generazione configurazione: ' + error.message, 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function showFinalResults(data) {
+            document.getElementById('configFileName').textContent = data.config_filename;
+            document.getElementById('configSize').textContent = (data.config_size / 1024).toFixed(1) + ' KB';
+            document.getElementById('configContent').textContent = data.config_content;
+        }
+
+        function downloadConfig() {
+            const content = document.getElementById('configContent').textContent;
+            const filename = document.getElementById('configFileName').textContent;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function moveToStep(step) {
+            // Update progress bar
+            const progressFill = document.getElementById('progressFill');
+            progressFill.className = 'stepper-progress-fill';
+            if (step === 2) progressFill.classList.add('step2');
+            if (step === 3) progressFill.classList.add('step3');
+
+            // Aggiorna UI step
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                const contentEl = document.getElementById(`step${i}Content`);
+
+                stepEl.classList.remove('active', 'completed');
+                contentEl.classList.add('hidden');
+
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                    contentEl.classList.remove('hidden');
+                }
+            }
+
+            currentStep = step;
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+            container.innerHTML = `<div class="message ${type}">${icon} ${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

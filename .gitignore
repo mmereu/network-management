@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+env/
+venv/
+.venv/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+**/frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!apps/ssh-terminal/backend/.env.example
+*.pem
+*.key
+credentials.json
+
+# Sensitive data files (credentials)
+Pdv.CSV
+pdv.csv
+*.credentials.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backups (may contain sensitive data)
+backups/
+**/backups/
+
+# SQLite databases (may contain sensitive data)
+*.db
+config_backup.db
+
+# Claude traces (conversation logs)
+.claude-trace/
+
+# Serena memories (may contain sensitive data)
+.serena/memories/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

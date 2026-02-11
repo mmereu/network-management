@@ -1,0 +1,2265 @@
+<!-- Cache-bust: 20251107_214346 - Fixed device.name to device.hostname -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huawei Network Discovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #43e97b;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2rem;
+        }
+
+        .back-link {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: #e0e0e0;
+        }
+
+        /* ====== ALARM PANEL STYLES ====== */
+        .alarm-panel {
+            display: none; /* Hidden by default in discovery page */
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .alarm-panel.active {
+            display: block; /* Show only when explicitly activated */
+        }
+
+        .alarm-panel.has-critical {
+            background: #f8d7da;
+            border-color: #dc3545;
+            animation: pulse-alarm 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-alarm {
+            0%, 100% { box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2); }
+            50% { box-shadow: 0 4px 16px rgba(220, 53, 69, 0.4); }
+        }
+
+        .alarm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .alarm-header h3 {
+            color: #333;
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        .mute-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .mute-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .mute-btn.muted {
+            background: #dc3545;
+        }
+
+        .alarm-list {
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alarm-item {
+            background: white;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #6c757d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .alarm-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateX(2px);
+        }
+
+        .alarm-item.critical {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .alarm-item.warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+
+        .alarm-item.info {
+            border-left-color: #17a2b8;
+            background: #f0f9ff;
+        }
+
+        .alarm-info {
+            flex: 1;
+        }
+
+        .alarm-device {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .alarm-message {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .alarm-time {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .alarm-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .alarm-badge.critical {
+            background: #dc3545;
+            color: white;
+        }
+
+        .alarm-badge.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .alarm-badge.info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .alarm-footer {
+            text-align: center;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .no-alarms {
+            text-align: center;
+            padding: 30px;
+            color: #28a745;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* ====== END ALARM PANEL STYLES ====== */
+
+        .scan-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #43e97b;
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 233, 123, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-bar {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+            display: none;
+        }
+
+        .status-bar.active {
+            display: block;
+        }
+
+        .status-bar.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .status-bar.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .results-panel {
+            display: none;
+        }
+
+        .results-panel.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-count {
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        td {
+            padding: 12px 15px;
+        }
+
+        .no-devices {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #43e97b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        /* ====== START MONITORING BUTTON STYLES ====== */
+
+        .btn-monitor {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        /* Default Hover State */
+        .btn-monitor:hover:not(:disabled):not(.loading):not(.success):not(.error) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 233, 123, 0.4);
+        }
+
+        /* Loading State */
+        .btn-monitor.loading {
+            opacity: 0.8;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .btn-monitor.loading::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin-mini 0.8s linear infinite;
+            margin-left: 4px;
+        }
+
+        /* Success State */
+        .btn-monitor.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .btn-monitor.success::after {
+            content: ' ✓';
+            margin-left: 4px;
+            font-weight: bold;
+        }
+
+        /* Error State */
+        .btn-monitor.error {
+            background: #f8f8f8;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            animation: pulse-error 0.5s ease-in-out;
+        }
+
+        .btn-monitor.error::before {
+            content: '⚠ ';
+            margin-right: 0px;
+        }
+
+        /* Disabled State (Already Monitoring) */
+        .btn-monitor:disabled,
+        .btn-monitor.disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.8;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-monitor.disabled::after {
+            content: ' ✓';
+            text-decoration: none;
+            color: #28a745;
+            margin-left: 4px;
+            font-weight: bold;
+        }
+
+        /* Animations */
+        @keyframes spin-mini {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-error {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Action Cell */
+        .action-cell {
+            text-align: center;
+            position: relative;
+        }
+
+        /* Inline Notification */
+        .device-notification {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            z-index: 1001;
+            animation: slideDown 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .device-notification.notification-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .device-notification.notification-error {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* ====== END MONITORING BUTTON STYLES ====== */
+
+        @media (max-width: 768px) {
+            .alarm-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .alarm-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            /* Mobile responsive button */
+            .btn-monitor {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                min-width: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn-monitor {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+                min-width: 110px;
+                width: 100%;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            th, td {
+                padding: 4px 6px;
+            }
+        }
+
+        /* Sortable Table Headers */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 25px;
+        }
+
+        th.sortable:hover {
+            background: linear-gradient(135deg, #38d977 0%, #30e5c5 100%);
+        }
+
+        th.sortable::after {
+            content: '⇅';
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+        }
+
+        th.sortable.sort-asc::after {
+            content: '▲';
+            opacity: 1;
+        }
+
+        th.sortable.sort-desc::after {
+            content: '▼';
+            opacity: 1;
+        }
+
+        /* Export Buttons */
+        .btn-export {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-export:hover:not(:disabled) {
+            background: #218838;
+        }
+
+        .btn-export-csv {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-export-csv:hover:not(:disabled) {
+            background: #138496;
+        }
+
+        /* Home Button */
+        .home-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .home-button .icon {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .home-button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+/* ==================== GLOBAL MONITORING DASHBOARD ==================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.90);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.monitoring-panel {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 20px;
+    width: 95%;
+    max-width: 1600px;
+    height: 92vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-header {
+    padding: 25px 35px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px 20px 0 0;
+}
+
+.panel-header h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.close-btn {
+    background: rgba(255, 68, 68, 0.2);
+    border: 2px solid #ff4444;
+    color: #ff4444;
+    font-size: 24px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    background: #ff4444;
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+.stats-bar {
+    padding: 25px 35px;
+    display: flex;
+    gap: 50px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-value {
+    font-size: 42px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat.online .stat-value {
+    color: #00ff88;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+}
+
+.stat.offline .stat-value {
+    color: #ff4444;
+    text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+}
+
+.device-grid {
+    padding: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.device-grid::-webkit-scrollbar {
+    width: 10px;
+}
+
+.device-grid::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.device-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.device-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.device-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    backdrop-filter: blur(10px);
+}
+
+.device-card.status-online {
+    border-color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.device-card.status-online:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 30px rgba(0, 255, 136, 0.4);
+}
+
+.device-card.status-offline {
+    border-color: #ff4444;
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 35px rgba(255, 68, 68, 0.7);
+    }
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.device-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-online .status-badge {
+    background: #00ff88;
+    color: #000;
+}
+
+.status-offline .status-badge {
+    background: #ff4444;
+    color: #fff;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.device-ip {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Courier New', monospace;
+}
+
+.device-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.response-time {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.device-card.status-online .response-time {
+    color: #00ff88;
+}
+
+.device-card.status-offline .response-time {
+    color: #ff4444;
+}
+
+/* Button global monitoring */
+#startGlobalMonitoringBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#startGlobalMonitoringBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+#startGlobalMonitoringBtn:active {
+    transform: translateY(0);
+}
+
+.monitoring-controls {
+    padding: 20px 35px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.control-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.control-btn.active {
+    background: #00ff88;
+    color: #000;
+    border-color: #00ff88;
+}
+
+.interval-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.interval-selector label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+.interval-selector select {
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.last-update {
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+}
+    </style>
+</head>
+<body>
+<!-- Global Monitoring Dashboard Modal -->
+    <!-- GLOBAL MONITORING DASHBOARD -->
+    <div id="monitoringDashboard" class="modal-overlay">
+        <div class="monitoring-panel">
+            <div class="panel-header">
+                <h2>🖥️ Global Monitoring Dashboard</h2>
+                <button id="closeDashboard" class="close-btn">✖</button>
+            </div>
+
+            <div class="monitoring-controls">
+                <button id="pauseMonitoring" class="control-btn">⏸ Pausa</button>
+                <button id="refreshNow" class="control-btn">🔄 Aggiorna Ora</button>
+
+                <div class="interval-selector">
+                    <label>Intervallo Poll:</label>
+                    <select id="pollIntervalSelect">
+                        <option value="15000">15 secondi</option>
+                        <option value="30000" selected>30 secondi</option>
+                        <option value="60000">1 minuto</option>
+                        <option value="120000">2 minuti</option>
+                        <option value="300000">5 minuti</option>
+                    </select>
+                </div>
+
+                <span class="last-update" id="lastUpdateTime">Ultimo aggiornamento: Mai</span>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-value" id="totalDevices">0</span>
+                    <span class="stat-label">Totale Device</span>
+                </div>
+                <div class="stat online">
+                    <span class="stat-value" id="onlineDevices">0</span>
+                    <span class="stat-label">Online</span>
+                </div>
+                <div class="stat offline">
+                    <span class="stat-value" id="offlineDevices">0</span>
+                    <span class="stat-label">Offline</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="avgResponseTime">0ms</span>
+                    <span class="stat-label">Tempo Medio</span>
+                </div>
+            </div>
+
+            <div id="deviceGrid" class="device-grid">
+                <!-- Device cards popolate dinamicamente via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Button global monitoring (mostrato dopo discovery completata) -->
+    <button id="startGlobalMonitoringBtn" onclick="openMonitoringDashboard()" class="monitoring-btn">
+        📡 Avvia Monitoring Globale
+    </button>
+    <a href="/" class="home-button">
+        <span class="icon">🏠</span>
+        <span>Home</span>
+    </a>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Huawei Network Discovery</h1>
+            <a href="/" class="back-link">← Torna alla Home</a>
+        </div>
+
+        <!-- ====== ALARM PANEL ====== -->
+        <div id="alarmPanel" class="alarm-panel">
+            <div class="alarm-header">
+                <h3>🚨 Active Alarms</h3>
+                <button id="muteBtn" class="mute-btn" onclick="toggleMute()">
+                    <span id="muteBtnText">🔊 Mute</span>
+                </button>
+            </div>
+            <div id="alarmList" class="alarm-list"></div>
+            <div class="alarm-footer">
+                Last checked: <span id="lastCheck">--:--:--</span>
+            </div>
+        </div>
+
+        <div class="scan-panel">
+            <h2 style="margin-bottom: 20px; color: #333;">Configurazione Scansione</h2>
+
+            <div class="form-group">
+                <label for="network">Network / IP Address</label>
+                <input
+                    type="text"
+                    id="network"
+                    placeholder="Es: 10.10.4.0/24 oppure 10.10.4.25"
+                    value="10.10.4.0/24"
+                >
+                <div class="help-text">
+                    Inserisci una rete (/24, /16, ecc.) o un singolo IP<br>
+                    <strong>Community SNMP:</strong> (configurata automaticamente)
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="startScan()" id="scanBtn">
+                    🔍 Avvia Scansione
+                </button>
+                <button class="btn-secondary btn-export" onclick="exportIPs()" id="exportBtn" disabled>
+                    📄 Esporta IP (TXT)
+                </button>
+                <button class="btn-secondary btn-export-csv" onclick="exportCSV()" id="exportCsvBtn" disabled>
+                    📊 Esporta CSV
+                </button>
+            </div>
+        </div>
+
+        <div id="statusBar" class="status-bar"></div>
+
+        <div id="loadingPanel" style="display: none;">
+            <div class="spinner"></div>
+            <div class="loading-text">Scansione in corso...</div>
+        </div>
+
+        <div id="resultsPanel" class="results-panel">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">0 dispositivi trovati</div>
+                <div style="color: #666; font-size: 0.9rem;" id="scanTime"></div>
+            </div>
+
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortByIP()">IP Address</th>
+                        <th>Model</th>
+                        <th>Nome</th>
+                        <th>Uptime</th>
+                        <th style="text-align: center;">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // API URLs - configure via environment or edit for your deployment
+        const SERVER_BASE = window.location.origin;
+        const API_URL = SERVER_BASE + '/api/discover';
+        let isProcessing = false;
+        const MONITOR_API_URL = SERVER_BASE + ':5001/api/monitoring/add';
+        const STATUS_API_URL = SERVER_BASE + ':5001/api/monitoring/status';
+        const ALARMS_API_URL = SERVER_BASE + ':5001/api/alarms/list';
+        const API_TIMEOUT = 10000; // 10 seconds
+
+        let discoveredDevices = [];
+        let sortDirection = 'none'; // 'none', 'asc', 'desc'
+
+        // ====== ALARM MONITORING STATE ======
+        let lastCriticalAlarmCount = 0;
+        let audioMuted = false;
+        let alarmCheckInterval = null;
+        let audioContext = null;
+
+        /**
+         * Initialize Web Audio Context (lazy initialization)
+         */
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        /**
+         * Play alert sound using Web Audio API
+         */
+        function playAlertSound() {
+            if (audioMuted) return;
+
+            try {
+                const ctx = initAudioContext();
+                const beeps = 3;
+                const frequency = 800; // Hz
+                const duration = 0.2; // seconds
+                const gapDuration = 0.1; // seconds
+
+                for (let i = 0; i < beeps; i++) {
+                    setTimeout(() => {
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+
+                        oscillator.frequency.value = frequency;
+                        oscillator.type = 'sine';
+                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + duration);
+                    }, i * (duration + gapDuration) * 1000);
+                }
+
+                console.log('🔊 Alert sound played');
+            } catch (error) {
+                console.error('Failed to play alert sound:', error);
+            }
+        }
+
+        /**
+         * Toggle audio mute
+         */
+        function toggleMute() {
+            audioMuted = !audioMuted;
+            const btn = document.getElementById('muteBtnText');
+            const muteBtn = document.getElementById('muteBtn');
+
+            if (audioMuted) {
+                btn.textContent = '🔇 Unmute';
+                muteBtn.classList.add('muted');
+                console.log('🔇 Audio alerts muted');
+            } else {
+                btn.textContent = '🔊 Mute';
+                muteBtn.classList.remove('muted');
+                console.log('🔊 Audio alerts enabled');
+            }
+        }
+
+        /**
+         * Format timestamp to HH:MM:SS
+         */
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        /**
+         * Update alarm panel UI
+         */
+        function updateAlarmPanel(alarms) {
+            const alarmList = document.getElementById('alarmList');
+            const alarmPanel = document.getElementById('alarmPanel');
+
+            if (!alarms || alarms.length === 0) {
+                alarmList.innerHTML = '<div class="no-alarms">✓ No active alarms</div>';
+                alarmPanel.classList.remove('has-critical');
+                alarmPanel.classList.remove('active'); // Hide when no alarms
+                return;
+            }
+
+            alarmPanel.classList.add('active'); // Show when alarms exist
+
+
+            // Check for critical alarms
+            const criticalAlarms = alarms.filter(a => a.severity === 'critical');
+            if (criticalAlarms.length > 0) {
+                alarmPanel.classList.add('has-critical');
+            } else {
+                alarmPanel.classList.remove('has-critical');
+            }
+
+            // Build alarm list HTML
+            const alarmsHTML = alarms.map(alarm => {
+                const severityClass = alarm.severity || 'info';
+                const alarmType = alarm.alarm_type || 'Device Unreachable';
+                const deviceIP = alarm.device_ip || 'Unknown';
+                const timestamp = alarm.timestamp || new Date().toISOString();
+
+                return `
+                    <div class="alarm-item ${severityClass}">
+                        <div class="alarm-info">
+                            <div class="alarm-device">${deviceIP}</div>
+                            <div class="alarm-message">${alarmType}</div>
+                            <div class="alarm-time">${formatTimestamp(timestamp)}</div>
+                        </div>
+                        <span class="alarm-badge ${severityClass}">${severityClass}</span>
+                    </div>
+                `;
+            }).join('');
+
+            alarmList.innerHTML = alarmsHTML;
+        }
+
+        /**
+         * Check for alarms
+         */
+        async function checkAlarms() {
+            try {
+                const response = await fetch(ALARMS_API_URL);
+                const data = await response.json();
+
+                // Update last checked timestamp
+                const now = new Date();
+                const timeStr = formatTimestamp(now);
+                document.getElementById('lastCheck').textContent = timeStr;
+
+                if (data.success && data.alarms) {
+                    updateAlarmPanel(data.alarms);
+
+                    // Check for NEW critical alarms
+                    const criticalCount = data.alarms.filter(a => a.severity === 'critical').length;
+
+                    if (criticalCount > lastCriticalAlarmCount && !audioMuted) {
+                        console.log(`🚨 NEW critical alarm detected! Count: ${lastCriticalAlarmCount} → ${criticalCount}`);
+                        playAlertSound();
+                    }
+
+                    lastCriticalAlarmCount = criticalCount;
+                }
+
+            } catch (error) {
+                console.error('Failed to check alarms:', error);
+                document.getElementById('lastCheck').textContent = 'Error';
+            }
+        }
+
+        /**
+         * Start alarm monitoring
+         */
+        function startAlarmMonitoring() {
+            // Initial check
+            checkAlarms();
+
+            // Poll every 10 seconds
+            if (alarmCheckInterval) {
+                clearInterval(alarmCheckInterval);
+            }
+
+            alarmCheckInterval = setInterval(checkAlarms, 10000);
+            console.log('✓ Alarm monitoring started (polling every 10s)');
+        }
+
+        /**
+         * Stop alarm monitoring
+         */
+        function stopAlarmMonitoring() {
+            if (alarmCheckInterval) {
+                clearInterval(alarmCheckInterval);
+                alarmCheckInterval = null;
+                console.log('✓ Alarm monitoring stopped');
+            }
+        }
+
+        // ====== DEVICE MONITORING STATE ======
+        const deviceMonitoringState = {};
+
+        function getDeviceState(ip) {
+            if (!deviceMonitoringState[ip]) {
+                deviceMonitoringState[ip] = {
+                    ip: ip,
+                    isMonitoring: false,
+                    isLoading: false,
+                    hasError: false,
+                    errorMessage: null,
+                    lastAttemptTime: null,
+                    monitoringStartTime: null,
+                    buttonElement: null
+                };
+            }
+            return deviceMonitoringState[ip];
+        }
+
+        function updateDeviceState(ip, updates) {
+            const state = getDeviceState(ip);
+            Object.assign(state, updates);
+            updateButtonUI(ip);
+        }
+
+        /**
+         * Update button UI based on device state
+         */
+        function updateButtonUI(ip) {
+            const state = getDeviceState(ip);
+            const button = document.querySelector(`[data-device-ip="${ip}"]`);
+
+            if (!button) return;
+
+            state.buttonElement = button;
+
+            // Remove all state classes
+            button.classList.remove('loading', 'success', 'error', 'disabled');
+            button.disabled = false;
+
+            if (state.isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+                button.innerHTML = '📡 Monitoraggio...';
+                button.setAttribute('aria-busy', 'true');
+            }
+            else if (state.isMonitoring) {
+                button.classList.add('disabled');
+                button.disabled = true;
+                button.innerHTML = '📡 Monitoring Attivo';
+                button.setAttribute('aria-label', `Monitoraggio attivo per ${ip}`);
+                button.setAttribute('data-monitoring', 'true');
+                button.setAttribute('data-tooltip', `Attivo da ${formatUptime(state.monitoringStartTime)}`);
+            }
+            else if (state.hasError) {
+                button.classList.add('error');
+                button.innerHTML = `Errore - Riprova`;
+                button.setAttribute('aria-live', 'polite');
+                button.setAttribute('aria-label', `Errore: ${state.errorMessage}. Clicca per ritentare.`);
+
+                // Auto-reset after delay
+                setTimeout(() => {
+                    if (state.hasError && !state.isLoading && !state.isMonitoring) {
+                        state.hasError = false;
+                        state.errorMessage = null;
+                        updateButtonUI(ip);
+                    }
+                }, 3000);
+            }
+            else {
+                button.innerHTML = '📡 Avvia Monitoring';
+                button.setAttribute('aria-label', `Avvia monitoraggio per dispositivo ${ip}`);
+                button.disabled = false;
+            }
+        }
+
+        /**
+         * Start monitoring entry point
+         */
+        async function startMonitoring(event, ip, hostname, model) {
+            // Debounce protection
+            if (isProcessing) {
+                console.log('Previous monitoring request still processing');
+                return;
+            }
+            isProcessing = true;
+            setTimeout(() => { isProcessing = false; }, 300);
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const state = getDeviceState(ip);
+
+            // Prevent duplicate requests
+            if (state.isLoading || state.isMonitoring) {
+                console.warn(`Device ${ip} already in loading or monitoring state`);
+                return;
+            }
+
+            await initiateMonitoring(ip);
+        }
+
+        /**
+         * Orchestrate the monitoring initiation
+         */
+        async function initiateMonitoring(ip) {
+            const state = getDeviceState(ip);
+
+            try {
+                // Step 1: Update to loading state
+                updateDeviceState(ip, {
+                    isLoading: true,
+                    hasError: false,
+                    errorMessage: null,
+                    lastAttemptTime: Date.now()
+                });
+
+                // Step 2: Call API with timeout
+                const response = await fetchWithTimeout(
+                    MONITOR_API_URL,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ip: ip })
+                    },
+                    API_TIMEOUT
+                );
+
+                // Step 3: Parse response
+                if (!response.ok) {
+                    throw new Error(await parseErrorResponse(response));
+                }
+
+                const data = await response.json();
+
+                // Step 4: Validate response
+                if (data.status !== "success") {
+                    throw new Error(data.message || 'Unknown error from server');
+                }
+
+                // Step 5: Update state to success
+                updateDeviceState(ip, {
+                    isLoading: false,
+                    isMonitoring: true,
+                    hasError: false,
+                    monitoringStartTime: Date.now()
+                });
+
+                // Step 6: Show notification
+                showDeviceNotification(ip, `✓ Monitoraggio avviato per ${ip}`, 'success');
+
+                // Step 7: Log event
+                logMonitoringEvent(ip, 'started', data);
+
+                return true;
+
+            } catch (error) {
+                handleMonitoringError(ip, error);
+                return false;
+            }
+        }
+
+        /**
+         * Handle monitoring errors
+         */
+        function handleMonitoringError(ip, error) {
+            const state = getDeviceState(ip);
+            const errorMessage = error.message || 'Errore sconosciuto';
+
+            console.error(`Monitoring failed for ${ip}:`, error);
+
+            updateDeviceState(ip, {
+                isLoading: false,
+                hasError: true,
+                errorMessage: errorMessage
+            });
+
+            showDeviceNotification(ip, `✗ Errore: ${errorMessage}`, 'error');
+            logMonitoringEvent(ip, 'failed', { error: errorMessage });
+        }
+
+        /**
+         * Fetch with timeout support
+         */
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('Timeout: Nessuna risposta dal server (>10s)');
+                }
+                throw error;
+            }
+        }
+
+        /**
+         * Parse error response
+         */
+        async function parseErrorResponse(response) {
+            try {
+                const data = await response.json();
+                return data.error || data.message || `HTTP ${response.status}`;
+            } catch {
+                return `HTTP ${response.status}: ${response.statusText}`;
+            }
+        }
+
+        /**
+         * Format uptime duration
+         */
+        function formatUptime(startTime) {
+            if (!startTime) return 'N/A';
+
+            const ms = Date.now() - startTime;
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (hours > 0) return `${hours}h ${minutes % 60}m`;
+            if (minutes > 0) return `${minutes}m`;
+            return `${seconds}s`;
+        }
+
+        /**
+         * Format device ID for attributes
+         */
+        function formatDeviceId(ip) {
+            return `device-${ip.replace(/\./g, '-')}`;
+        }
+
+        /**
+         * Log monitoring events
+         */
+        function logMonitoringEvent(ip, action, details = {}) {
+            const event = {
+                timestamp: new Date().toISOString(),
+                action: action,
+                ip: ip,
+                details: details
+            };
+
+            console.log('MONITORING_EVENT:', event);
+        }
+
+        /**
+         * Show device-specific notification
+         */
+        function showDeviceNotification(ip, message, type = 'info', duration = 4000) {
+            const deviceCell = document.querySelector(`[data-device-ip="${ip}"]`)?.closest('td');
+
+            if (deviceCell) {
+                showInlineNotification(deviceCell, message, type, duration);
+            } else {
+                showGlobalNotification(message, type, duration);
+            }
+        }
+
+        /**
+         * Show inline notification near button
+         */
+        function showInlineNotification(element, message, type, duration) {
+            const notification = document.createElement('div');
+            notification.className = `device-notification notification-${type}`;
+            notification.textContent = message;
+
+            element.style.position = 'relative';
+            element.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, duration);
+        }
+
+        /**
+         * Show global status notification
+         */
+        function showGlobalNotification(message, type = 'info', duration = 4000) {
+            const statusBar = document.getElementById('statusBar');
+            statusBar.textContent = message;
+            statusBar.className = `status-bar active ${type}`;
+
+            setTimeout(() => {
+                statusBar.classList.remove('active');
+            }, duration);
+        }
+
+        /**
+         * Check monitoring status for all devices
+         */
+        async function checkAllDeviceStatus() {
+            const buttons = document.querySelectorAll('.btn-monitor');
+
+            const promises = Array.from(buttons).map(btn => {
+                const ip = btn.getAttribute('data-device-ip');
+                return checkMonitoringStatus(ip);
+            });
+
+            await Promise.all(promises);
+        }
+
+        /**
+         * Check if device is already being monitored
+         */
+        async function checkMonitoringStatus(ip) {
+            try {
+                const response = await fetchWithTimeout(
+                    `${STATUS_API_URL}?ip=${ip}`,
+                    { method: 'GET' },
+                    5000
+                );
+
+                if (!response.ok) throw new Error('Failed to check status');
+
+                const data = await response.json();
+
+                if (data.isMonitoring) {
+                    updateDeviceState(ip, {
+                        isMonitoring: true,
+                        monitoringStartTime: new Date(data.startTime).getTime()
+                    });
+                }
+            } catch (error) {
+                console.warn(`Could not check monitoring status for ${ip}:`, error);
+            }
+        }
+
+        /**
+         * Original discovery scan function
+         */
+        async function startScan() {
+            const network = document.getElementById('network').value.trim();
+
+            if (!network) {
+                showStatus('Inserisci una rete o IP valido', 'error');
+                return;
+            }
+
+            // Disable buttons
+            document.getElementById('scanBtn').disabled = true;
+            document.getElementById('exportBtn').disabled = true;
+            document.getElementById('exportCsvBtn').disabled = true;
+
+            // Show loading
+            document.getElementById('loadingPanel').style.display = 'block';
+            document.getElementById('resultsPanel').classList.remove('active');
+            document.getElementById('statusBar').classList.remove('active');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ network: network })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Errore durante la scansione');
+                }
+
+                discoveredDevices = data.devices || [];
+                displayResults(data);
+
+            } catch (error) {
+                showStatus(`Errore: ${error.message}`, 'error');
+                console.error('Scan error:', error);
+            } finally {
+                document.getElementById('loadingPanel').style.display = 'none';
+                document.getElementById('scanBtn').disabled = false;
+                document.getElementById('exportBtn').disabled = discoveredDevices.length === 0;
+                document.getElementById('exportCsvBtn').disabled = discoveredDevices.length === 0;
+
+                // Reset sort direction for new scan
+                sortDirection = 'none';
+                const sortHeader = document.querySelector('th.sortable');
+                if (sortHeader) {
+                    sortHeader.classList.remove('sort-asc', 'sort-desc');
+                }
+            }
+        }
+
+        /**
+         * Display discovery results with monitoring buttons
+         */
+        function displayResults(data) {
+            const devices = data.devices || [];
+            const resultsBody = document.getElementById('resultsBody');
+            const resultsPanel = document.getElementById('resultsPanel');
+            const resultsCount = document.getElementById('resultsCount');
+
+            resultsBody.innerHTML = '';
+
+            // Update device count display
+            resultsCount.textContent = `${devices.length} dispositivi trovati`;
+
+            if (devices.length === 0) {
+                resultsBody.innerHTML = '<tr><td colspan="5" class="no-devices">Nessun dispositivo Huawei trovato con la community SNMP configurata</td></tr>';
+                showStatus('Scansione completata - 0 dispositivi trovati', 'success');
+            } else {
+                renderDeviceRows(devices);
+
+                showStatus(`Trovati ${devices.length} dispositivi Huawei`, 'success');
+
+                // Store scan time
+                document.getElementById('scanTime').textContent = `Scansione completata: ${new Date().toLocaleString('it-IT')}`;
+
+                // Check monitoring status for all devices
+                setTimeout(checkAllDeviceStatus, 500);
+            }
+
+            resultsPanel.classList.add('active');
+        }
+
+        /**
+         * Render device rows in table
+         */
+        function renderDeviceRows(devices) {
+            const resultsBody = document.getElementById('resultsBody');
+            resultsBody.innerHTML = '';
+
+            devices.forEach(device => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${device.ip}</strong></td>
+                    <td>${device.model}</td>
+                    <td>${device.hostname}</td>
+                    <td>${device.uptime}</td>
+                    <td class="action-cell">
+                        <button
+                            class="btn-monitor"
+                            data-device-ip="${device.ip}"
+                            data-device-id="${formatDeviceId(device.ip)}"
+                            onclick="startMonitoring(event, '${device.ip}', '${device.hostname || 'Unknown'}', '${device.model || 'Unknown'}')"
+                            aria-label="Avvia monitoraggio per dispositivo ${device.ip}"
+                            title="Clicca per avviare il monitoraggio di questo dispositivo"
+                        >
+                            📡 Avvia Monitoring
+                        </button>
+                    </td>
+                `;
+                resultsBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Sort devices by IP address
+         */
+        function sortByIP() {
+            if (discoveredDevices.length === 0) return;
+
+            const header = document.querySelector('th.sortable');
+
+            // Toggle sort direction
+            if (sortDirection === 'none' || sortDirection === 'desc') {
+                sortDirection = 'asc';
+                header.classList.remove('sort-desc');
+                header.classList.add('sort-asc');
+            } else {
+                sortDirection = 'desc';
+                header.classList.remove('sort-asc');
+                header.classList.add('sort-desc');
+            }
+
+            // Sort by IP (numeric comparison)
+            discoveredDevices.sort((a, b) => {
+                const ipA = a.ip.split('.').map(n => parseInt(n, 10));
+                const ipB = b.ip.split('.').map(n => parseInt(n, 10));
+
+                for (let i = 0; i < 4; i++) {
+                    if (ipA[i] !== ipB[i]) {
+                        return sortDirection === 'asc'
+                            ? ipA[i] - ipB[i]
+                            : ipB[i] - ipA[i];
+                    }
+                }
+                return 0;
+            });
+
+            // Re-render table
+            renderDeviceRows(discoveredDevices);
+        }
+
+        /**
+         * Export discovered devices to CSV file
+         */
+        function exportCSV() {
+            if (discoveredDevices.length === 0) {
+                showStatus('Nessun dispositivo da esportare', 'error');
+                return;
+            }
+
+            // CSV header
+            let csvContent = 'IP Address,Model,Nome\n';
+
+            // CSV data rows
+            discoveredDevices.forEach(device => {
+                const ip = device.ip || '';
+                const model = (device.model || '').replace(/,/g, ';'); // Escape commas
+                const nome = (device.hostname || '').replace(/,/g, ';');
+                csvContent += `${ip},${model},${nome}\n`;
+            });
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `huawei_devices_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showStatus(`Esportati ${discoveredDevices.length} dispositivi in formato CSV`, 'success');
+        }
+
+        /**
+         * Export discovered IPs to text file
+         */
+        function exportIPs() {
+            if (discoveredDevices.length === 0) {
+                showStatus('Nessun dispositivo da esportare', 'error');
+                return;
+            }
+
+            const ipList = discoveredDevices.map(d => d.ip).join('\n');
+            const blob = new Blob([ipList], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `huawei_devices_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showStatus(`Esportati ${discoveredDevices.length} IP in formato TXT`, 'success');
+        }
+
+        /**
+         * Show status message
+         */
+        function showStatus(message, type = 'info') {
+            const statusBar = document.getElementById('statusBar');
+            statusBar.textContent = message;
+            statusBar.className = `status-bar active ${type}`;
+
+            setTimeout(() => {
+                statusBar.classList.remove('active');
+            }, 5000);
+        }
+
+        // ====== INITIALIZATION ======
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✓ Discovery page initialized');
+
+            // Start alarm monitoring on page load
+    // startAlarmMonitoring(); // Removed auto-start - user must click Manage Alarms
+
+            // Add keyboard shortcut to toggle mute (Ctrl+M)
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'm') {
+                    e.preventDefault();
+                    toggleMute();
+                }
+            });
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            stopAlarmMonitoring();
+        });
+    </script>
+
+<script>
+// ==================== GLOBAL MONITORING DASHBOARD ====================
+
+// Global state
+const MonitoringState = {
+    active: false,
+    paused: false,
+    devices: [],
+    pollInterval: 30000, // milliseconds
+    pollTimer: null,
+    lastPoll: null
+};
+
+// Open Global Monitoring Dashboard
+function openMonitoringDashboard() {
+    console.log('[Monitoring] Opening dashboard...');
+
+    // Get all discovered devices from the table
+    const tableRows = document.querySelectorAll('#resultsTable tbody tr');
+    const devices = [];
+
+    tableRows.forEach(row => {
+        const cells = row.cells;
+        if (cells && cells.length >= 3) {
+            const ip = cells[0].textContent.trim();
+            const hostname = cells[2].textContent.trim();
+
+            if (ip && ip !== 'N/A') {
+                devices.push({ ip, hostname });
+            }
+        }
+    });
+
+    if (devices.length === 0) {
+        alert('Nessun dispositivo trovato. Esegui prima una discovery.');
+        return;
+    }
+
+    console.log(`[Monitoring] Found ${devices.length} devices`);
+
+    // Update state
+    MonitoringState.devices = devices;
+    MonitoringState.active = true;
+    MonitoringState.paused = false;
+
+    // Show modal (FIXED ID: monitoringDashboard)
+    const modal = document.getElementById('monitoringDashboard');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('[Monitoring] Modal displayed');
+
+        // Start polling immediately
+        pollAllDevices();
+
+        // Setup auto-polling
+        startAutoPolling();
+    } else {
+        console.error('[Monitoring] Modal element #monitoringDashboard not found!');
+    }
+}
+
+// Poll All Devices
+function pollAllDevices() {
+    if (!MonitoringState.active || MonitoringState.devices.length === 0) {
+        console.log('[Monitoring] Polling skipped - not active or no devices');
+        return;
+    }
+
+    console.log(`[Monitoring] Polling ${MonitoringState.devices.length} devices...`);
+
+    // Update last poll time
+    MonitoringState.lastPoll = new Date();
+    updateLastPollTime();
+
+    // Call batch monitoring API
+    fetch(STATUS_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            devices: MonitoringState.devices
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('[Monitoring] Poll response:', data);
+
+        if (data.success && data.results) {
+            updateDashboard(data.results, data.total, data.online, data.offline);
+        } else {
+            console.error('[Monitoring] Invalid response format:', data);
+        }
+    })
+    .catch(error => {
+        console.error('[Monitoring] Poll error:', error);
+        // Show error in UI
+        const grid = document.getElementById('deviceGrid');
+        if (grid && grid.children.length === 0) {
+            grid.innerHTML = `<div style="color: #ff4444; padding: 20px; text-align: center;">
+                Errore polling: ${error.message}
+            </div>`;
+        }
+    });
+}
+
+// Update Dashboard with Results (FIXED IDs)
+function updateDashboard(results, total, online, offline) {
+    console.log(`[Monitoring] Updating dashboard: ${online}/${total} online`);
+
+    // Update stats (FIXED IDs)
+    document.getElementById('totalDevices').textContent = total || 0;
+    document.getElementById('onlineDevices').textContent = online || 0;
+    document.getElementById('offlineDevices').textContent = offline || 0;
+
+    // Calculate average response time
+    const onlineDevices = results.filter(r => r.status === 'online' && r.response_time);
+    const avgTime = onlineDevices.length > 0
+        ? Math.round(onlineDevices.reduce((sum, r) => sum + r.response_time, 0) / onlineDevices.length)
+        : 0;
+    document.getElementById('avgResponseTime').textContent = avgTime > 0 ? `${avgTime}ms` : '0ms';
+
+    // Update device grid (FIXED ID)
+    const grid = document.getElementById('deviceGrid');
+    if (!grid) {
+        console.error('[Monitoring] Device grid element #deviceGrid not found!');
+        return;
+    }
+
+    grid.innerHTML = ''; // Clear existing cards
+
+    results.forEach(device => {
+        const card = createDeviceCard(device);
+        grid.appendChild(card);
+    });
+
+    console.log('[Monitoring] Dashboard updated with', results.length, 'devices');
+}
+
+// Create Device Card
+function createDeviceCard(device) {
+    const card = document.createElement('div');
+    card.className = `device-card status-${device.status}`;
+
+    const statusIcon = device.status === 'online' ? '✅' : '❌';
+    const statusText = device.status === 'online' ? 'Online' : 'Offline';
+    const statusClass = device.status === 'online' ? 'status-online' : 'status-offline';
+
+    const responseInfo = device.response_time
+        ? `<div class="response-time">⏱ ${device.response_time}ms</div>`
+        : '';
+
+    const errorInfo = device.error
+        ? `<div style="color: #ff4444; font-size: 12px; margin-top: 10px;">⚠️ ${device.error}</div>`
+        : '';
+
+    const uptimeInfo = device.uptime
+        ? `<div style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;" title="${device.uptime}">🕐 Uptime OK</div>`
+        : '';
+
+    card.innerHTML = `
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">${statusIcon}</span>
+                <div>
+                    <div class="device-name">${device.hostname || 'Unknown'}</div>
+                    <div class="device-ip">${device.ip}</div>
+                </div>
+            </div>
+            <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+        <div class="card-body">
+            ${responseInfo}
+            ${uptimeInfo}
+            ${errorInfo}
+        </div>
+    `;
+
+    return card;
+}
+
+// Start Auto-Polling
+function startAutoPolling() {
+    // Clear existing timer if any
+    if (MonitoringState.pollTimer) {
+        clearInterval(MonitoringState.pollTimer);
+    }
+
+    const interval = MonitoringState.pollInterval;
+    console.log(`[Monitoring] Starting auto-poll every ${interval}ms`);
+
+    MonitoringState.pollTimer = setInterval(() => {
+        if (!MonitoringState.paused) {
+            pollAllDevices();
+        }
+    }, interval);
+}
+
+// Stop Auto-Polling
+function stopAutoPolling() {
+    if (MonitoringState.pollTimer) {
+        clearInterval(MonitoringState.pollTimer);
+        MonitoringState.pollTimer = null;
+        console.log('[Monitoring] Auto-polling stopped');
+    }
+}
+
+// Update Last Poll Time Display (FIXED ID)
+function updateLastPollTime() {
+    const elem = document.getElementById('lastUpdateTime');
+    if (elem && MonitoringState.lastPoll) {
+        const now = new Date();
+        const diff = Math.floor((now - MonitoringState.lastPoll) / 1000);
+
+        if (diff < 60) {
+            elem.textContent = `Ultimo aggiornamento: ${diff}s fa`;
+        } else {
+            const minutes = Math.floor(diff / 60);
+            elem.textContent = `Ultimo aggiornamento: ${minutes}m fa`;
+        }
+    }
+}
+
+// Close Monitoring Dashboard (FIXED ID)
+function closeMonitoringDashboard() {
+    console.log('[Monitoring] Closing dashboard...');
+
+    MonitoringState.active = false;
+    stopAutoPolling();
+
+    const modal = document.getElementById('monitoringDashboard');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Toggle Pause/Resume (FIXED ID)
+function togglePauseMonitoring() {
+    MonitoringState.paused = !MonitoringState.paused;
+
+    const btn = document.getElementById('pauseMonitoring');
+    if (btn) {
+        btn.textContent = MonitoringState.paused ? '▶️ Riprendi' : '⏸ Pausa';
+    }
+
+    console.log(`[Monitoring] ${MonitoringState.paused ? 'Paused' : 'Resumed'}`);
+}
+
+// Change Poll Interval (FIXED ID)
+function changePollInterval(seconds) {
+    MonitoringState.pollInterval = seconds;
+    console.log(`[Monitoring] Poll interval changed to ${seconds}ms`);
+
+    // Restart auto-polling with new interval
+    if (MonitoringState.active) {
+        startAutoPolling();
+    }
+}
+
+// Initialize Event Listeners (FIXED IDs)
+function initMonitoringDashboard() {
+    console.log('[Monitoring] Initializing dashboard event listeners...');
+
+    // Close button (FIXED ID)
+    const closeBtn = document.getElementById('closeDashboard');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeMonitoringDashboard);
+        console.log('[Monitoring] Close button listener attached');
+    } else {
+        console.warn('[Monitoring] Close button #closeDashboard not found');
+    }
+
+    // Pause/Resume button (FIXED ID)
+    const pauseBtn = document.getElementById('pauseMonitoring');
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', togglePauseMonitoring);
+        console.log('[Monitoring] Pause button listener attached');
+    } else {
+        console.warn('[Monitoring] Pause button #pauseMonitoring not found');
+    }
+
+    // Refresh Now button (FIXED ID)
+    const refreshBtn = document.getElementById('refreshNow');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            console.log('[Monitoring] Manual refresh triggered');
+            pollAllDevices();
+        });
+        console.log('[Monitoring] Refresh button listener attached');
+    } else {
+        console.warn('[Monitoring] Refresh button #refreshNow not found');
+    }
+
+    // Poll Interval selector (FIXED ID)
+    const intervalSelect = document.getElementById('pollIntervalSelect');
+    if (intervalSelect) {
+        intervalSelect.addEventListener('change', (e) => {
+            const millis = parseInt(e.target.value);
+            changePollInterval(millis);
+        });
+        console.log('[Monitoring] Interval selector listener attached');
+    } else {
+        console.warn('[Monitoring] Interval selector #pollIntervalSelect not found');
+    }
+
+    // Update "last poll time" display every 5 seconds
+    setInterval(updateLastPollTime, 5000);
+
+    console.log('[Monitoring] Event listeners initialized successfully');
+}
+
+// Initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMonitoringDashboard);
+} else {
+    initMonitoringDashboard();
+}
+
+console.log('[Monitoring] Dashboard script loaded with FIXED IDs');
+
+</script>
+</body>
+</html>
